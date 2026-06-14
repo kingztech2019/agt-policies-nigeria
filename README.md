@@ -1,0 +1,204 @@
+# agt-policies-nigeria
+
+**Nigerian & African AI Agent Governance Policies for Microsoft's [Agent Governance Toolkit (AGT)](https://github.com/microsoft/agent-governance-toolkit)**
+
+A community policy pack that extends AGT with compliance coverage for African regulatory frameworks — NDPA 2023, CBN regulations, NFIU/AML rules, POS geo-fencing, BVN/NIN data protection, and POPIA (South Africa). Drop-in YAML policy files: no new infrastructure, no SDK changes.
+
+---
+
+## Why this exists
+
+AGT covers OWASP Agentic AI Top 10, NIST AI RMF, EU AI Act, SOC 2, and HIPAA. It covers zero African regulatory frameworks. As AI agents are deployed in Nigerian fintech, insurtech, and banking — making decisions that touch regulated financial data and sensitive personal identifiers — there is no governance tooling built for this context.
+
+This repo fills that gap.
+
+---
+
+## Coverage
+
+| Policy Pack | Regulation | Key Controls |
+|---|---|---|
+| `ndpa-data-residency.yaml` | Nigeria Data Protection Act 2023 | Cross-border transfer restrictions, sensitive data handling, data minimisation |
+| `cbn-transaction-limits.yaml` | CBN Regulations (Tiered KYC, NIP, USSD) | Transaction threshold enforcement, approval queues, SOD controls |
+| `pos-geofencing.yaml` | CBN Agent Banking Guidelines | Terminal geo-zone enforcement, location-mismatch blocking |
+| `bvn-nin-protection.yaml` | NIBSS / NIN Regulations | BVN/NIN masking, exposure prevention, verification approval gates |
+| `nfiu-aml-str.yaml` | NFIU AML/CFT Regulations | STR/CTR triggers, structuring detection, velocity controls |
+| `popia-south-africa.yaml` | POPIA (South Africa) | Cross-border transfer controls, special personal information, SA ID masking |
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install agent-os-kernel agent-governance-toolkit-compliance
+```
+
+### Load and apply policy packs
+
+```python
+import yaml, re
+from pathlib import Path
+from agent_os.integrations import GovernancePolicy
+from agent_os.integrations.base import PolicyInterceptor, ToolCallRequest
+
+# Load regex patterns from any policy file(s)
+def load_patterns(policy_files):
+    patterns = []
+    for path in policy_files:
+        doc = yaml.safe_load(Path(path).read_text())
+        for rule in doc.get("rules", []):
+            cond = rule.get("condition", {})
+            if cond.get("operator") == "matches" and cond.get("field") == "output":
+                if rule.get("action") in ("deny", "block", "escalate"):
+                    patterns.append(cond["value"])
+    return patterns
+
+patterns = load_patterns(["policies/cbn-transaction-limits.yaml",
+                          "policies/bvn-nin-protection.yaml"])
+
+policy = GovernancePolicy(
+    name="nigerian-fintech",
+    blocked_patterns=patterns,
+    log_all_calls=True,
+)
+
+interceptor = PolicyInterceptor(policy)
+```
+
+### Validate policy files with AGT linter
+
+```bash
+# Lint all policy packs
+.venv/bin/python3 -c "
+from agent_compliance.lint_policy import lint_file
+from pathlib import Path
+for p in sorted(Path('policies').glob('*.yaml')):
+    r = lint_file(str(p))
+    errors = [m for m in r.messages if m.severity == 'error']
+    print(('✅' if not errors else '❌'), p.name)
+"
+```
+
+---
+
+## Policy Packs
+
+### NDPA 2023 — Data Residency & Privacy
+`policies/ndpa-data-residency.yaml`
+
+Enforces Nigeria Data Protection Act 2023 obligations for AI agents:
+- Blocks agent actions that route personal data outside Nigeria without adequate safeguards
+- Requires approval for bulk data export operations
+- Denies processing of sensitive personal data (health, biometric, ethnic origin) without conditions
+- Audits all PII-touching tool calls for NDPC accountability requirements
+
+### CBN Transaction Limits
+`policies/cbn-transaction-limits.yaml`
+
+Enforces Central Bank of Nigeria transaction threshold rules:
+- Tiered KYC limits (Tier 1: ₦50k daily → Tier 3: ₦5M daily)
+- Requires human approval for transfers approaching or exceeding NIP limits (₦10M)
+- Blocks autonomous agent self-approval of financial transactions (SOD)
+- USSD and contactless transaction ceiling enforcement
+
+### POS Geo-Fencing
+`policies/pos-geofencing.yaml`
+
+Enforces CBN agent banking geo-compliance for POS terminal operations:
+- Denies POS tool calls where terminal location context is absent or mismatched
+- Requires approval for POS registration changes and cross-state transactions
+- Audits all terminal activation and transaction events
+
+### BVN/NIN Protection
+`policies/bvn-nin-protection.yaml`
+
+Protects Nigeria's two most sensitive personal identifiers:
+- Detects and blocks BVN/NIN patterns in agent output (prevents logging/exposure)
+- Denies passing BVN/NIN to external endpoints without approval
+- Requires human-in-the-loop for any BVN verification action
+- Masks identifiers in audit trail
+
+### NFIU AML/STR
+`policies/nfiu-aml-str.yaml`
+
+Enforces Nigerian Financial Intelligence Unit anti-money laundering controls:
+- Requires approval for transactions at or above the ₦5M CTR threshold
+- Detects structuring patterns (smurfing — multiple amounts just under threshold)
+- Velocity controls: flags unusual transaction frequency in a session
+- Blocks agent from autonomously completing transactions that should trigger STRs
+
+### POPIA — South Africa
+`policies/popia-south-africa.yaml`
+
+Enforces Protection of Personal Information Act (South Africa) for AI agents:
+- Blocks cross-border transfers to non-POPIA-adequate jurisdictions
+- Denies processing of special personal information without lawful conditions
+- Detects SA ID numbers in agent output and blocks exposure
+- Audits all personal information processing for RESPONSIBLE PARTY accountability
+
+---
+
+## Demo
+
+See [`examples/nigerian-fintech-demo/`](examples/nigerian-fintech-demo/) for an end-to-end demo. Run it with:
+
+```bash
+.venv/bin/python3 examples/nigerian-fintech-demo/demo.py
+```
+
+A Nigerian fintech support agent attempts 5 actions. The governance layer intercepts each one live from the loaded policy files:
+
+| Step | Action | Decision | Policy Pack |
+|---|---|---|---|
+| 1 | ₦6.5M refund attempt | ⏳ ESCALATED | `cbn-transaction-limits.yaml` |
+| 2 | BVN exposed in response | ❌ BLOCKED | `bvn-nin-protection.yaml` |
+| 3 | Export records to AWS US-East-1 | ⏳ ESCALATED | `ndpa-data-residency.yaml` |
+| 4 | KYC bypass + payment | ⏳ ESCALATED | `nfiu-aml-str.yaml` |
+| 5 | Normal customer lookup | ✅ ALLOWED | — |
+
+Every decision is written to a timestamped audit log satisfying NDPA s.30 accountability requirements.
+
+---
+
+## Roadmap
+
+- [ ] Kenya Data Protection Act 2019 policy pack
+- [ ] ECOWAS cross-border transfer rules
+- [ ] SIM swap fraud detection patterns
+- [ ] NAICOM insurtech AI governance rules
+- [ ] SEC Nigeria capital markets AI rules
+- [ ] `ndpa-2023-mapping.md` — full NDPA → AGT control mapping (for AGT `docs/compliance/` contribution)
+
+---
+
+## Contributing
+
+Contributions welcome — especially from practitioners with direct CBN/NDPA/NFIU compliance experience. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+To propose a new policy rule:
+1. Open an issue describing the regulation, the specific obligation, and the agent action pattern it should govern
+2. Reference the exact regulatory citation (e.g., "NDPA 2023 s.25(1)(b)")
+3. Submit a PR with the rule and a test case in `examples/`
+
+---
+
+## Relation to AGT
+
+This repo is a **community policy pack** for [microsoft/agent-governance-toolkit](https://github.com/microsoft/agent-governance-toolkit). It is not affiliated with or endorsed by Microsoft. Policy files are compatible with AGT's `agent-os-kernel` package via `GovernancePolicy` + `PolicyInterceptor`, and validated using the `agent-governance-toolkit-compliance` linter.
+
+A `docs/compliance/ndpa-2023-mapping.md` contribution to the AGT upstream repo is planned once this pack has real-world validation.
+
+---
+
+## License
+
+MIT — same as AGT. See [LICENSE](LICENSE).
+
+---
+
+## Author
+
+Built by [Oluwajuwon Omotayo](https://github.com/kingztech2019) — Nigerian AI infrastructure, NDPA compliance, and GeoGuard POS geo-fencing.
