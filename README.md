@@ -2,7 +2,11 @@
 
 **Nigerian & African AI Agent Governance Policies for Microsoft's [Agent Governance Toolkit (AGT)](https://github.com/microsoft/agent-governance-toolkit)**
 
-A community policy pack that extends AGT with compliance coverage for African regulatory frameworks — NDPA 2023, CBN regulations, NFIU/AML rules, POS geo-fencing, BVN/NIN data protection, and POPIA (South Africa). Drop-in YAML policy files: no new infrastructure, no SDK changes.
+A community policy pack that extends AGT with compliance coverage for African regulatory frameworks — NDPA 2023, CBN regulations, NFIU/AML rules, POS geo-fencing, BVN/NIN data protection, and POPIA (South Africa).
+
+Two policy formats:
+- **YAML** (`policies/*.yaml`) — drop-in rules files, validated by the AGT linter, no new infrastructure
+- **OPA Rego** (`policies/rego/*.rego`) — structured-parameter enforcement (e.g. `input.params.amount > 5000000`) that YAML regex on text output cannot achieve
 
 ---
 
@@ -24,6 +28,14 @@ This repo fills that gap.
 | `bvn-nin-protection.yaml` | NIBSS / NIN Regulations | BVN/NIN masking, exposure prevention, verification approval gates |
 | `nfiu-aml-str.yaml` | NFIU AML/CFT Regulations | STR/CTR triggers, structuring detection, velocity controls |
 | `popia-south-africa.yaml` | POPIA (South Africa) | Cross-border transfer controls, special personal information, SA ID masking |
+
+### OPA Rego (structured-parameter enforcement)
+
+| Rego Policy | Regulation | Key Advantage over YAML |
+|---|---|---|
+| `policies/rego/cbn-transaction-limits.rego` | CBN NIP/KYC | Checks `input.params.amount` directly — exact numeric enforcement, not text regex |
+| `policies/rego/bvn-nin-protection.rego` | CBN BVN / NIMC NIN | Checks `input.params.identifier_type` and `input.params.bvn_present` in structured params |
+| `policies/rego/ndpa-data-residency.rego` | NDPA 2023 s.25 | Checks `input.params.destination_region` and `input.params.record_count` — unambiguous |
 
 ---
 
@@ -71,7 +83,7 @@ interceptor = PolicyInterceptor(policy)
 ### Validate policy files with AGT linter
 
 ```bash
-# Lint all policy packs
+# Lint all YAML policy packs
 .venv/bin/python3 -c "
 from agent_compliance.lint_policy import lint_file
 from pathlib import Path
@@ -80,6 +92,13 @@ for p in sorted(Path('policies').glob('*.yaml')):
     errors = [m for m in r.messages if m.severity == 'error']
     print(('✅' if not errors else '❌'), p.name)
 "
+```
+
+### Validate OPA Rego policies
+
+```bash
+# Requires OPA binary — https://www.openpolicyagent.org/docs/latest/#running-opa
+for f in policies/rego/*.rego; do opa check "$f" && echo "PASS $f"; done
 ```
 
 ---
