@@ -1,0 +1,74 @@
+name: Validate Policies
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  rego:
+    name: OPA Rego — Syntax & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: v0.70.0
+
+      - name: Check Rego syntax
+        run: opa check policies/rego/
+
+      - name: Run Rego test suite
+        run: opa test policies/rego/ -v
+
+  yaml-lint:
+    name: AGT YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install AGT packages
+        run: pip install agent-os-kernel agent-governance-toolkit-compliance
+
+      - name: Lint YAML policy packs
+        run: |
+          python3 -c "
+          from agent_compliance.lint_policy import lint_file
+          from pathlib import Path
+          import sys
+          failed = False
+          for p in sorted(Path('policies').glob('*.yaml')):
+              r = lint_file(str(p))
+              errors = [m for m in r.messages if m.severity == 'error']
+              status = 'PASS' if not errors else 'FAIL'
+              print(f'{status}  {p.name}')
+              if errors:
+                  failed = True
+                  for e in errors:
+                      print(f'       ERROR: {e.message}')
+          if failed:
+              sys.exit(1)
+          "
+
+  demo:
+    name: End-to-End Demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install agent-os-kernel agent-governance-toolkit-compliance pyyaml
+
+      - name: Run Nigerian fintech demo
+        run: python3 examples/nigerian-fintech-demo/demo.py

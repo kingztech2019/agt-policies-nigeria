@@ -1,5 +1,7 @@
 # agt-policies-nigeria
 
+[![Validate Policies](https://github.com/kingztech2019/agt-policies-nigeria/actions/workflows/validate.yml/badge.svg)](https://github.com/kingztech2019/agt-policies-nigeria/actions/workflows/validate.yml)
+
 **Nigerian & African AI Agent Governance Policies for Microsoft's [Agent Governance Toolkit (AGT)](https://github.com/microsoft/agent-governance-toolkit)**
 
 A community policy pack that extends AGT with compliance coverage for African regulatory frameworks — NDPA 2023, CBN regulations, NFIU/AML rules, POS geo-fencing, BVN/NIN data protection, and POPIA (South Africa).
