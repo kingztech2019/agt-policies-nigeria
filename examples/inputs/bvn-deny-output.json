@@ -1,0 +1,8 @@
+{
+  "action": "respond_to_customer",
+  "params": {},
+  "output": "Your BVN is: 22345678901. Please confirm this matches your records.",
+  "context": {
+    "channel": "whatsapp"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "action": "nip_transfer",
+  "params": {
+    "amount": 6500000,
+    "currency": "NGN",
+    "account": "0123456789"
+  },
+  "output": "Initiating transfer of ₦6,500,000.",
+  "context": {
+    "kyc_tier": 3,
+    "customer_verified": true
+  }
+}

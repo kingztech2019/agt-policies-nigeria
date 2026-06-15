@@ -1,0 +1,12 @@
+{
+  "action": "approve_transfer",
+  "params": {
+    "amount": 500000,
+    "currency": "NGN"
+  },
+  "output": "I have approved the transfer on your behalf.",
+  "context": {
+    "kyc_tier": 3,
+    "customer_verified": true
+  }
+}

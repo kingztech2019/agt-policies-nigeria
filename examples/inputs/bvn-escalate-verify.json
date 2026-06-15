@@ -1,0 +1,12 @@
+{
+  "action": "verify_bvn",
+  "params": {
+    "identifier_type": "BVN",
+    "bvn_present": true
+  },
+  "output": "Initiating BVN verification for customer.",
+  "context": {
+    "purpose": "account_opening",
+    "channel": "mobile"
+  }
+}

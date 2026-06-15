@@ -1,0 +1,14 @@
+{
+  "action": "export_data",
+  "params": {
+    "destination_region": "af-south-1",
+    "destination_country": "NG",
+    "data_type": "customer_pii",
+    "record_count": 50
+  },
+  "output": "Syncing 50 customer records to af-south-1.",
+  "context": {
+    "purpose": "disaster_recovery",
+    "consent_documented": true
+  }
+}

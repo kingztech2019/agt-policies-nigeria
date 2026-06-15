@@ -1,0 +1,14 @@
+{
+  "action": "export_data",
+  "params": {
+    "destination_region": "us-east-1",
+    "destination_country": "US",
+    "data_type": "customer_pii",
+    "record_count": 1500
+  },
+  "output": "Exporting 1,500 customer records to AWS US-East-1.",
+  "context": {
+    "purpose": "backup",
+    "consent_documented": false
+  }
+}

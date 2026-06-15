@@ -103,6 +103,42 @@ for p in sorted(Path('policies').glob('*.yaml')):
 for f in policies/rego/*.rego; do opa check "$f" && echo "PASS $f"; done
 ```
 
+### Try it now — run a policy decision with `opa eval`
+
+```bash
+# CBN: block a ₦15M transfer (exceeds NIP cap)
+opa eval -d policies/rego/cbn-transaction-limits.rego \
+  -i examples/inputs/cbn-deny-nip-cap.json \
+  "data.agt_policies_nigeria.cbn.decision"
+# → "deny"
+
+# CBN: route a ₦6.5M transfer to human approval
+opa eval -d policies/rego/cbn-transaction-limits.rego \
+  -i examples/inputs/cbn-escalate-tier3.json \
+  "data.agt_policies_nigeria.cbn.decision"
+# → "escalate"
+
+# BVN: block BVN number exposed in agent output
+opa eval -d policies/rego/bvn-nin-protection.rego \
+  -i examples/inputs/bvn-deny-output.json \
+  "data.agt_policies_nigeria.bvn_nin.decision"
+# → "deny"
+
+# NDPA: block data export to AWS US-East-1
+opa eval -d policies/rego/ndpa-data-residency.rego \
+  -i examples/inputs/ndpa-deny-cross-border.json \
+  "data.agt_policies_nigeria.ndpa.decision"
+# → "deny"
+
+# NDPA: allow export to permitted af-south-1 region
+opa eval -d policies/rego/ndpa-data-residency.rego \
+  -i examples/inputs/ndpa-allow-permitted.json \
+  "data.agt_policies_nigeria.ndpa.decision"
+# → "allow"
+```
+
+All example input files are in [`examples/inputs/`](examples/inputs/). See [`docs/compliance-mapping.md`](docs/compliance-mapping.md) for the full mapping of regulatory obligations → Rego rules → expected decisions.
+
 ---
 
 ## Policy Packs
