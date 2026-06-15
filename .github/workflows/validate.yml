@@ -34,8 +34,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install AGT packages
-        run: pip install agent-os-kernel agent-governance-toolkit-compliance
+      - name: Clone AGT (source install — not yet on PyPI)
+        run: git clone --depth 1 https://github.com/microsoft/agent-governance-toolkit.git /tmp/agt
+
+      - name: Install AGT packages from source
+        run: |
+          pip install /tmp/agt/agent-governance-python/agent-governance-toolkit-core
+          pip install /tmp/agt/agent-governance-python/agent-os
+          pip install /tmp/agt/agent-governance-python/agent-compliance
 
       - name: Lint YAML policy packs
         run: |
@@ -67,8 +73,15 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: pip install agent-os-kernel agent-governance-toolkit-compliance pyyaml
+      - name: Clone AGT (source install — not yet on PyPI)
+        run: git clone --depth 1 https://github.com/microsoft/agent-governance-toolkit.git /tmp/agt
+
+      - name: Install dependencies from source
+        run: |
+          pip install /tmp/agt/agent-governance-python/agent-governance-toolkit-core
+          pip install /tmp/agt/agent-governance-python/agent-os
+          pip install /tmp/agt/agent-governance-python/agent-compliance
+          pip install pyyaml
 
       - name: Run Nigerian fintech demo
         run: python3 examples/nigerian-fintech-demo/demo.py
