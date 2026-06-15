@@ -1,0 +1,6 @@
+{
+  "action": "respond",
+  "params": {},
+  "output": "Customer fingerprint template stored and matched successfully for authentication.",
+  "context": {}
+}

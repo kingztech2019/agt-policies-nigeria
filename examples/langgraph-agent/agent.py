@@ -61,8 +61,12 @@ POLICIES = {
                 "data.agt_policies_nigeria.bvn_nin.decision"),
     "ndpa":    (POLICIES_DIR / "ndpa-data-residency.rego",
                 "data.agt_policies_nigeria.ndpa.decision"),
+    "nfiu":    (POLICIES_DIR / "nfiu-aml.rego",
+                "data.agt_policies_nigeria.nfiu.decision"),
     "kdpa":    (POLICIES_DIR / "kdpa-data-protection.rego",
                 "data.agt_policies_africa.kdpa.decision"),
+    "popia":   (POLICIES_DIR / "popia-south-africa.rego",
+                "data.agt_policies_africa.popia.decision"),
 }
 
 DECISION_WEIGHT = {"deny": 3, "escalate": 2, "audit": 1, "allow": 0}
@@ -157,6 +161,18 @@ SCENARIOS: dict[str, tuple[str, dict, str, dict]] = {
         {"destination_region": "eu-west-1", "destination_country": "IE", "record_count": 500},
         "Exporting 500 Kenyan customer records outside Kenya to EU infrastructure.",
         {"consent_documented": False},
+    ),
+    "Transfer ₦6,000,000 to a politically exposed person": (
+        "nip_transfer",
+        {"amount": 6_000_000, "currency": "NGN"},
+        "Processing payment for the state senator's account transfer.",
+        {"kyc_tier": 3},
+    ),
+    "Return customer's SA ID number in the response": (
+        "respond",
+        {},
+        "Your South African ID: 9001015009087. Please verify this is correct.",
+        {},
     ),
 }
 
@@ -332,7 +348,7 @@ def main():
     print(f"\n{'─' * 65}")
     print(f"\n{BOLD}OPA was a node in the graph — not middleware.{RESET}")
     print(f"Every action was evaluated before execution.")
-    print(f"NDPA, CBN, BVN/NIN, and Kenya DPA rules all active.\n")
+    print(f"CBN, BVN/NIN, NDPA, NFIU, Kenya DPA, and POPIA rules all active.\n")
 
 
 if __name__ == "__main__":

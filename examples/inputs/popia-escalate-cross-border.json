@@ -1,0 +1,12 @@
+{
+  "action": "export_data",
+  "params": {
+    "destination_country": "CN",
+    "destination_region": "ap-east-1",
+    "record_count": 200
+  },
+  "output": "Exporting 200 South African customer records to cloud storage in China.",
+  "context": {
+    "consent_documented": false
+  }
+}

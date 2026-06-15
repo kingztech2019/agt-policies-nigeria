@@ -39,7 +39,9 @@ This repo fills that gap.
 | `policies/rego/cbn-transaction-limits.rego` | CBN NIP/KYC | Checks `input.params.amount` directly — exact numeric enforcement, not text regex |
 | `policies/rego/bvn-nin-protection.rego` | CBN BVN / NIMC NIN | Checks `input.params.identifier_type` and `input.params.bvn_present` in structured params |
 | `policies/rego/ndpa-data-residency.rego` | NDPA 2023 s.25 | Checks `input.params.destination_region` and `input.params.record_count` — unambiguous |
+| `policies/rego/nfiu-aml.rego` | NFIU AML/CFT (MLPPA 2022) | Exact ₦5M CTR threshold on `input.params.amount`, structuring zone (₦4.5M–₦4.99M) |
 | `policies/rego/kdpa-data-protection.rego` | Kenya DPA 2019 s.49 | Cross-border transfers, sensitive data, biometric blocking, ODPC accountability |
+| `policies/rego/popia-south-africa.rego` | POPIA (Act 4 of 2013) | `destination_country` adequacy list (POPIA s.72), SA ID 13-digit format validation |
 
 ---
 
@@ -139,6 +141,31 @@ opa eval -d policies/rego/ndpa-data-residency.rego \
 # → "allow"
 ```
 
+# NFIU: block a ₦6M transfer (at CTR threshold — routes to human review)
+opa eval -d policies/rego/nfiu-aml.rego \
+  -i examples/inputs/nfiu-escalate-ctr.json \
+  "data.agt_policies_nigeria.nfiu.decision"
+# → "escalate"
+
+# NFIU: block a ₦11M transfer (exceeds NIP cap)
+opa eval -d policies/rego/nfiu-aml.rego \
+  -i examples/inputs/nfiu-deny-nip-cap.json \
+  "data.agt_policies_nigeria.nfiu.decision"
+# → "deny"
+
+# POPIA: block SA ID number in agent output
+opa eval -d policies/rego/popia-south-africa.rego \
+  -i examples/inputs/popia-deny-sa-id.json \
+  "data.agt_policies_africa.popia.decision"
+# → "deny"
+
+# POPIA: block biometric data in agent output
+opa eval -d policies/rego/popia-south-africa.rego \
+  -i examples/inputs/popia-deny-biometric.json \
+  "data.agt_policies_africa.popia.decision"
+# → "deny"
+```
+
 All example input files are in [`examples/inputs/`](examples/inputs/). See [`docs/compliance-mapping.md`](docs/compliance-mapping.md) for the full mapping of regulatory obligations → Rego rules → expected decisions.
 
 ---
@@ -205,7 +232,7 @@ Enforces Protection of Personal Information Act (South Africa) for AI agents:
 | Framework | Example | Description |
 |---|---|---|
 | AGT (Microsoft) | [`examples/nigerian-fintech-demo/`](examples/nigerian-fintech-demo/) | GovernancePolicy + PolicyInterceptor |
-| LangGraph | [`examples/langgraph-agent/`](examples/langgraph-agent/) | OPA as a governance node in a LangGraph StateGraph |
+| LangGraph | [`examples/langgraph-agent/`](examples/langgraph-agent/) | OPA as a governance node in a LangGraph StateGraph — all 6 Rego policies active |
 
 ### LangGraph + OPA
 
@@ -248,11 +275,17 @@ Every decision is written to a timestamped audit log satisfying NDPA s.30 accoun
 
 ## Roadmap
 
-- [x] Kenya Data Protection Act 2019 policy pack
+- [x] Kenya Data Protection Act 2019 policy pack (YAML + Rego)
+- [x] NFIU AML/CFT Rego policy — exact CTR threshold enforcement (`nfiu-aml.rego`)
+- [x] POPIA Rego policy — SA ID validation, adequacy list, biometric blocks (`popia-south-africa.rego`)
+- [x] Semantic versioning — `CHANGELOG.md` + `REGULATORY-CHANGES.md`
 - [ ] ECOWAS cross-border transfer rules
 - [ ] SIM swap fraud detection patterns
 - [ ] NAICOM insurtech AI governance rules
 - [ ] SEC Nigeria capital markets AI rules
+- [ ] Ghana Data Protection Act 2012 policy pack
+- [ ] OPA bundle packaging (`bundle.tar.gz`) for direct `opa run` deployment
+- [ ] JSON Schema for agent input (`schemas/agent-input.json`)
 - [ ] `ndpa-2023-mapping.md` — full NDPA → AGT control mapping (for AGT `docs/compliance/` contribution)
 
 ---

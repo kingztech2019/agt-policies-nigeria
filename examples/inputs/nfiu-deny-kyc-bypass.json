@@ -1,0 +1,6 @@
+{
+  "action": "respond",
+  "params": {},
+  "output": "We will skip kyc for this customer and proceed with the transfer.",
+  "context": {}
+}
