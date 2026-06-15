@@ -7,6 +7,23 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.1.0] — 2026-06-15
+
+Framework integrations: CrewAI and Microsoft AutoGen.
+
+### Added
+
+- **CrewAI integration** (`examples/crewai-agent/agent.py`) — `OPAGovernanceTool` as a CrewAI `BaseTool`. Two-agent crew: `compliance_agent` calls OPA before `executor_agent` proceeds. `step_callback` safety net. 6 demo scenarios including NG+ZA cross-border.
+- **Microsoft AutoGen integration** (`examples/autogen-agent/agent.py`) — `check_compliance()` registered as a callable tool for `GovernanceAgent` inside a three-agent GroupChat (`UserProxy → GovernanceAgent → ExecutorAgent`). 8 demo scenarios covering NG, KE, ZA jurisdictions.
+- Both examples include: jurisdiction router integration, `build_crew()`/`build_group_chat()` stubs with full real-LLM instructions, colored terminal output
+
+### Changed
+
+- README: Framework Integrations table expanded to 4 entries (AGT, LangGraph, CrewAI, AutoGen)
+- README: Added architecture diagrams for CrewAI and AutoGen governance flows
+
+---
+
 ## [1.0.0] — 2026-06-15
 
 First stable release. Full YAML + Rego parity across all six African policy packs.

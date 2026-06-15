@@ -39,6 +39,7 @@ from langgraph.graph import END, StateGraph
 REPO_ROOT    = Path(__file__).parent.parent.parent
 POLICIES_DIR = REPO_ROOT / "policies" / "rego"
 OPA_BINARY   = os.environ.get("OPA_PATH", "opa")
+ROUTER_FILE  = POLICIES_DIR / "jurisdiction-router.rego"
 
 # ── State ─────────────────────────────────────────────────────────────
 
@@ -91,14 +92,44 @@ def _opa_eval(policy_file: Path, input_data: dict, query: str) -> str:
     return "allow"  # fail-open when OPA is unavailable
 
 
+def route_jurisdictions(context: dict) -> set:
+    """
+    Query the jurisdiction router to get applicable policy packs for this context.
+    Falls back to all policies when no jurisdiction info is present (fail-open).
+    """
+    if not context.get("customer_country") and not context.get("transaction_countries"):
+        return set(POLICIES.keys())
+
+    try:
+        proc = subprocess.run(
+            [OPA_BINARY, "eval",
+             "-d", str(ROUTER_FILE),
+             "--stdin-input",
+             "--format", "raw",
+             "data.agt_policies.router.applicable_policies"],
+            input=json.dumps({"context": context}),
+            capture_output=True, text=True, timeout=5,
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            result = json.loads(proc.stdout.strip())
+            if isinstance(result, list) and result:
+                return set(result)
+    except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
+        pass
+
+    return set(POLICIES.keys())  # fail-open
+
+
 def evaluate_policies(
     action: str, params: dict, output: str, context: dict
 ) -> tuple[str, str]:
     """
-    Evaluate input against all loaded Rego policies.
+    1. Query jurisdiction router → applicable policy packs for this context.
+    2. Evaluate only applicable policies — skip irrelevant jurisdictions.
     Returns (decision, policy_name) — most restrictive decision wins.
     Priority: deny > escalate > audit > allow
     """
+    applicable = route_jurisdictions(context)
     input_data = {
         "action": action,
         "params": params,
@@ -110,6 +141,8 @@ def evaluate_policies(
     best_policy   = "none"
 
     for name, (policy_file, query) in POLICIES.items():
+        if name not in applicable:
+            continue
         if not policy_file.exists():
             continue
         decision = _opa_eval(policy_file, input_data, query)
@@ -130,49 +163,59 @@ SCENARIOS: dict[str, tuple[str, dict, str, dict]] = {
         "nip_transfer",
         {"amount": 8_000_000, "currency": "NGN", "account": "0123456789"},
         "Initiating transfer of ₦8,000,000 to account 0123456789.",
-        {"kyc_tier": 3},
+        {"kyc_tier": 3, "customer_country": "NG"},
     ),
     "Tell the customer their BVN is 22345678901": (
         "respond_to_customer",
         {},
         "Your BVN is: 22345678901. Please confirm this is correct.",
-        {},
+        {"customer_country": "NG"},
     ),
     "Export 2,000 customer records to AWS US-East-1": (
         "export_data",
         {"destination_region": "us-east-1", "destination_country": "US", "record_count": 2000},
         "Exporting 2,000 customer records outside Nigeria to AWS US-East-1.",
-        {"consent_documented": False},
+        {"consent_documented": False, "customer_country": "NG"},
     ),
     "Look up account balance for customer CUS-001": (
         "read_customer",
         {"customer_id": "CUS-001"},
         "Fetching account balance for CUS-001.",
-        {},
+        {"customer_country": "NG"},
     ),
     "Verify the customer's BVN before account opening": (
         "verify_bvn",
         {"identifier_type": "BVN"},
         "Initiating BVN verification for account opening.",
-        {"purpose": "account_opening"},
+        {"purpose": "account_opening", "customer_country": "NG"},
     ),
     "Export 500 Kenyan customer records to Europe": (
         "export_data",
         {"destination_region": "eu-west-1", "destination_country": "IE", "record_count": 500},
         "Exporting 500 Kenyan customer records outside Kenya to EU infrastructure.",
-        {"consent_documented": False},
+        {"consent_documented": False, "customer_country": "KE"},
     ),
     "Transfer ₦6,000,000 to a politically exposed person": (
         "nip_transfer",
         {"amount": 6_000_000, "currency": "NGN"},
         "Processing payment for the state senator's account transfer.",
-        {"kyc_tier": 3},
+        {"kyc_tier": 3, "customer_country": "NG"},
     ),
     "Return customer's SA ID number in the response": (
         "respond",
         {},
         "Your South African ID: 9001015009087. Please verify this is correct.",
-        {},
+        {"customer_country": "ZA"},
+    ),
+    "Export Nigerian customer data to South African analytics platform": (
+        "export_data",
+        {"destination_region": "af-south-1", "destination_country": "ZA", "record_count": 800},
+        "Exporting 800 Nigerian customer records to South African analytics platform.",
+        {
+            "customer_country": "NG",
+            "transaction_countries": ["NG", "ZA"],
+            "consent_documented": False,
+        },
     ),
 }
 
@@ -347,8 +390,8 @@ def main():
 
     print(f"\n{'─' * 65}")
     print(f"\n{BOLD}OPA was a node in the graph — not middleware.{RESET}")
-    print(f"Every action was evaluated before execution.")
-    print(f"CBN, BVN/NIN, NDPA, NFIU, Kenya DPA, and POPIA rules all active.\n")
+    print(f"Jurisdiction router selected applicable policies per action.")
+    print(f"NG → CBN+BVN/NIN+NDPA+NFIU  |  KE → KDPA  |  ZA → POPIA  |  NG+ZA → all 5\n")
 
 
 if __name__ == "__main__":

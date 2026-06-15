@@ -227,12 +227,50 @@ Enforces Protection of Personal Information Act (South Africa) for AI agents:
 
 ---
 
+## Jurisdiction Router
+
+Multi-country agents should not evaluate every policy pack for every action. The jurisdiction router maps `customer_country` (and optional `transaction_countries`) to the correct set of policies — automatically.
+
+```bash
+# Which policies apply to a Nigerian customer?
+opa eval -d policies/rego/jurisdiction-router.rego \
+  -i examples/inputs/router-ng-single.json \
+  "data.agt_policies.router.applicable_policies"
+# → ["cbn","bvn_nin","ndpa","nfiu"]
+
+# Which policies apply when NG customer data crosses into ZA?
+opa eval -d policies/rego/jurisdiction-router.rego \
+  -i examples/inputs/router-ng-za-cross-border.json \
+  "data.agt_policies.router.applicable_policies"
+# → ["cbn","bvn_nin","ndpa","nfiu","popia"]  ← NDPA + POPIA both enforced
+
+# Get the OPA query paths to evaluate directly
+opa eval -d policies/rego/jurisdiction-router.rego \
+  -i examples/inputs/router-ng-single.json \
+  "data.agt_policies.router.resolved_queries"
+# → ["data.agt_policies_nigeria.cbn.decision", ...]
+```
+
+| Customer country | Applicable policies |
+|---|---|
+| `NG` | CBN, BVN/NIN, NDPA 2023, NFIU AML |
+| `KE` | Kenya DPA 2019 |
+| `ZA` | POPIA |
+| `NG` + `transaction_countries: [NG, ZA]` | All 5 — NDPA and POPIA both enforced |
+| Unknown country | Advisory warning returned; action audited |
+
+To add a new country, add one entry to `jurisdiction_policies` in [`policies/rego/jurisdiction-router.rego`](policies/rego/jurisdiction-router.rego). The router propagates automatically.
+
+---
+
 ## Framework Integrations
 
 | Framework | Example | Description |
 |---|---|---|
 | AGT (Microsoft) | [`examples/nigerian-fintech-demo/`](examples/nigerian-fintech-demo/) | GovernancePolicy + PolicyInterceptor |
 | LangGraph | [`examples/langgraph-agent/`](examples/langgraph-agent/) | OPA as a governance node in a LangGraph StateGraph — all 6 Rego policies active |
+| CrewAI | [`examples/crewai-agent/`](examples/crewai-agent/) | `OPAGovernanceTool` as a CrewAI `BaseTool` — compliance_agent fires before executor_agent |
+| Microsoft AutoGen | [`examples/autogen-agent/`](examples/autogen-agent/) | `GovernanceAgent` + `check_compliance` function in a three-agent GroupChat |
 
 ### LangGraph + OPA
 
@@ -248,6 +286,40 @@ task → plan → opa_check → execute       (allow)
 pip install langgraph langchain-core
 python examples/langgraph-agent/agent.py
 ```
+
+### CrewAI + OPA
+
+`OPAGovernanceTool` is a CrewAI `BaseTool` — the compliance_agent is required to call it before any executor_agent action. A `step_callback` provides a safety net:
+
+```
+task → compliance_agent (OPAGovernanceTool) → allow/audit → executor_agent
+                                            → escalate    → human review queue
+                                            → deny        → crew stops
+```
+
+```bash
+pip install crewai
+python examples/crewai-agent/agent.py
+```
+
+To use a real LLM, set `OPENAI_API_KEY` and follow the commented-out crew setup in `agent.py`.
+
+### Microsoft AutoGen + OPA
+
+`check_compliance()` is registered as a callable tool for `GovernanceAgent` inside a three-agent GroupChat. `ExecutorAgent` only proceeds on `allow` or `audit` verdicts:
+
+```
+UserProxy → GovernanceAgent (check_compliance) → APPROVED  → ExecutorAgent
+                                               → BLOCKED   → stops
+                                               → ESCALATED → human queue
+```
+
+```bash
+pip install pyautogen
+python examples/autogen-agent/agent.py
+```
+
+To use a real LLM, set `OPENAI_API_KEY` and follow the commented-out `build_group_chat()` in `agent.py`.
 
 ---
 
@@ -284,6 +356,7 @@ Every decision is written to a timestamped audit log satisfying NDPA s.30 accoun
 - [ ] NAICOM insurtech AI governance rules
 - [ ] SEC Nigeria capital markets AI rules
 - [ ] Ghana Data Protection Act 2012 policy pack
+- [x] Jurisdiction router — `customer_country` + `transaction_countries` → applicable policy packs
 - [ ] OPA bundle packaging (`bundle.tar.gz`) for direct `opa run` deployment
 - [ ] JSON Schema for agent input (`schemas/agent-input.json`)
 - [ ] `ndpa-2023-mapping.md` — full NDPA → AGT control mapping (for AGT `docs/compliance/` contribution)

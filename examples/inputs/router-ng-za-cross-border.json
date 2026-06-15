@@ -1,0 +1,6 @@
+{
+  "context": {
+    "customer_country": "NG",
+    "transaction_countries": ["NG", "ZA"]
+  }
+}
