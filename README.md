@@ -30,6 +30,7 @@ This repo fills that gap.
 | `bvn-nin-protection.yaml` | NIBSS / NIN Regulations | BVN/NIN masking, exposure prevention, verification approval gates |
 | `nfiu-aml-str.yaml` | NFIU AML/CFT Regulations | STR/CTR triggers, structuring detection, velocity controls |
 | `popia-south-africa.yaml` | POPIA (South Africa) | Cross-border transfer controls, special personal information, SA ID masking |
+| `kenya-dpa.yaml` | Kenya Data Protection Act 2019 | Cross-border transfer restrictions, sensitive data, breach notification (72h to ODPC) |
 
 ### OPA Rego (structured-parameter enforcement)
 
@@ -38,6 +39,7 @@ This repo fills that gap.
 | `policies/rego/cbn-transaction-limits.rego` | CBN NIP/KYC | Checks `input.params.amount` directly — exact numeric enforcement, not text regex |
 | `policies/rego/bvn-nin-protection.rego` | CBN BVN / NIMC NIN | Checks `input.params.identifier_type` and `input.params.bvn_present` in structured params |
 | `policies/rego/ndpa-data-residency.rego` | NDPA 2023 s.25 | Checks `input.params.destination_region` and `input.params.record_count` — unambiguous |
+| `policies/rego/kdpa-data-protection.rego` | Kenya DPA 2019 s.49 | Cross-border transfers, sensitive data, biometric blocking, ODPC accountability |
 
 ---
 
@@ -198,9 +200,33 @@ Enforces Protection of Personal Information Act (South Africa) for AI agents:
 
 ---
 
+## Framework Integrations
+
+| Framework | Example | Description |
+|---|---|---|
+| AGT (Microsoft) | [`examples/nigerian-fintech-demo/`](examples/nigerian-fintech-demo/) | GovernancePolicy + PolicyInterceptor |
+| LangGraph | [`examples/langgraph-agent/`](examples/langgraph-agent/) | OPA as a governance node in a LangGraph StateGraph |
+
+### LangGraph + OPA
+
+OPA runs as a **node** in the agent graph — not middleware. Every action must pass through it before execution:
+
+```
+task → plan → opa_check → execute       (allow)
+                      ├──► human_review  (escalate)
+                      └──► blocked       (deny)
+```
+
+```bash
+pip install langgraph langchain-core
+python examples/langgraph-agent/agent.py
+```
+
+---
+
 ## Demo
 
-See [`examples/nigerian-fintech-demo/`](examples/nigerian-fintech-demo/) for an end-to-end demo. Run it with:
+See [`examples/nigerian-fintech-demo/`](examples/nigerian-fintech-demo/) for an end-to-end AGT demo. Run it with:
 
 ```bash
 .venv/bin/python3 examples/nigerian-fintech-demo/demo.py
@@ -222,7 +248,7 @@ Every decision is written to a timestamped audit log satisfying NDPA s.30 accoun
 
 ## Roadmap
 
-- [ ] Kenya Data Protection Act 2019 policy pack
+- [x] Kenya Data Protection Act 2019 policy pack
 - [ ] ECOWAS cross-border transfer rules
 - [ ] SIM swap fraud detection patterns
 - [ ] NAICOM insurtech AI governance rules
