@@ -5,11 +5,11 @@
 package agt_policies_africa.popia_test
 
 import data.agt_policies_africa.popia
-import future.keywords.in
+import rego.v1
 
 # ── Deny: biometric data ──────────────────────────────────────────
 
-test_deny_biometric_fingerprint {
+test_deny_biometric_fingerprint if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -18,7 +18,7 @@ test_deny_biometric_fingerprint {
     }
 }
 
-test_deny_biometric_facial_recognition {
+test_deny_biometric_facial_recognition if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -27,7 +27,7 @@ test_deny_biometric_facial_recognition {
     }
 }
 
-test_deny_biometric_voice_print {
+test_deny_biometric_voice_print if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -38,7 +38,7 @@ test_deny_biometric_voice_print {
 
 # ── Deny: children's personal information ────────────────────────
 
-test_deny_children_minor {
+test_deny_children_minor if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -47,7 +47,7 @@ test_deny_children_minor {
     }
 }
 
-test_deny_children_under_18 {
+test_deny_children_under_18 if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -58,7 +58,7 @@ test_deny_children_under_18 {
 
 # ── Deny: SA ID number ────────────────────────────────────────────
 
-test_deny_sa_id_13digit {
+test_deny_sa_id_13digit if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -67,7 +67,7 @@ test_deny_sa_id_13digit {
     }
 }
 
-test_deny_sa_id_contextual {
+test_deny_sa_id_contextual if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -76,7 +76,7 @@ test_deny_sa_id_contextual {
     }
 }
 
-test_deny_sa_id_south_african_label {
+test_deny_sa_id_south_african_label if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -87,7 +87,7 @@ test_deny_sa_id_south_african_label {
 
 # ── Deny: breach suppression ──────────────────────────────────────
 
-test_deny_breach_suppression_dont_report {
+test_deny_breach_suppression_dont_report if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -96,7 +96,7 @@ test_deny_breach_suppression_dont_report {
     }
 }
 
-test_deny_breach_suppression_hide {
+test_deny_breach_suppression_hide if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -107,7 +107,7 @@ test_deny_breach_suppression_hide {
 
 # ── Deny: cross-border non-adequate country ───────────────────────
 
-test_deny_cross_border_china {
+test_deny_cross_border_china if {
     count(popia.deny) > 0 with input as {
         "action": "export_data",
         "params": {"destination_country": "CN", "destination_region": "ap-east-1", "record_count": 100},
@@ -115,7 +115,7 @@ test_deny_cross_border_china {
     }
 }
 
-test_deny_cross_border_russia {
+test_deny_cross_border_russia if {
     count(popia.deny) > 0 with input as {
         "action": "upload_to_cloud",
         "params": {"destination_country": "RU", "destination_region": "ru-central-1", "record_count": 50},
@@ -125,7 +125,7 @@ test_deny_cross_border_russia {
 
 # ── Deny: purpose limitation ──────────────────────────────────────
 
-test_deny_purpose_limitation {
+test_deny_purpose_limitation if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -134,7 +134,7 @@ test_deny_purpose_limitation {
     }
 }
 
-test_deny_data_without_authorisation {
+test_deny_data_without_authorisation if {
     count(popia.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -145,7 +145,7 @@ test_deny_data_without_authorisation {
 
 # ── Escalate: cross-border actions ───────────────────────────────
 
-test_escalate_cross_border_export_action {
+test_escalate_cross_border_export_action if {
     count(popia.escalate) > 0 with input as {
         "action": "export_data",
         "params": {"destination_country": "GB", "destination_region": "eu-west-2", "record_count": 50},
@@ -153,7 +153,7 @@ test_escalate_cross_border_export_action {
     }
 }
 
-test_escalate_cross_border_language_outside_sa {
+test_escalate_cross_border_language_outside_sa if {
     count(popia.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -164,7 +164,7 @@ test_escalate_cross_border_language_outside_sa {
 
 # ── Escalate: special personal information ────────────────────────
 
-test_escalate_health_data_hiv {
+test_escalate_health_data_hiv if {
     count(popia.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -173,7 +173,7 @@ test_escalate_health_data_hiv {
     }
 }
 
-test_escalate_health_data_mental {
+test_escalate_health_data_mental if {
     count(popia.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -182,7 +182,7 @@ test_escalate_health_data_mental {
     }
 }
 
-test_escalate_race_ethnicity {
+test_escalate_race_ethnicity if {
     count(popia.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -191,7 +191,7 @@ test_escalate_race_ethnicity {
     }
 }
 
-test_escalate_criminal_record {
+test_escalate_criminal_record if {
     count(popia.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -202,21 +202,21 @@ test_escalate_criminal_record {
 
 # ── Audit: PII access ─────────────────────────────────────────────
 
-test_audit_read_customer {
+test_audit_read_customer if {
     count(popia.audit) > 0 with input as {
         "action": "read_customer",
         "params": {}, "output": "", "context": {}
     }
 }
 
-test_audit_get_profile {
+test_audit_get_profile if {
     count(popia.audit) > 0 with input as {
         "action": "get_profile",
         "params": {}, "output": "", "context": {}
     }
 }
 
-test_audit_lookup_account {
+test_audit_lookup_account if {
     count(popia.audit) > 0 with input as {
         "action": "lookup_account",
         "params": {}, "output": "", "context": {}
@@ -225,7 +225,7 @@ test_audit_lookup_account {
 
 # ── Allow: normal operations ──────────────────────────────────────
 
-test_allow_normal_action {
+test_allow_normal_action if {
     popia.decision == "allow" with input as {
         "action": "check_fraud_score",
         "params": {}, "output": "Fraud score: 0.1 — low risk.", "context": {}
@@ -234,7 +234,7 @@ test_allow_normal_action {
 
 # ── Decision rules ────────────────────────────────────────────────
 
-test_decision_deny_biometric {
+test_decision_deny_biometric if {
     popia.decision == "deny" with input as {
         "action": "respond",
         "params": {},
@@ -243,7 +243,7 @@ test_decision_deny_biometric {
     }
 }
 
-test_decision_deny_sa_id {
+test_decision_deny_sa_id if {
     popia.decision == "deny" with input as {
         "action": "respond",
         "params": {},
@@ -252,7 +252,7 @@ test_decision_deny_sa_id {
     }
 }
 
-test_decision_deny_non_adequate_country {
+test_decision_deny_non_adequate_country if {
     popia.decision == "deny" with input as {
         "action": "export_data",
         "params": {"destination_country": "CN", "destination_region": "ap-east-1"},
@@ -260,7 +260,7 @@ test_decision_deny_non_adequate_country {
     }
 }
 
-test_decision_escalate_cross_border_action {
+test_decision_escalate_cross_border_action if {
     popia.decision == "escalate" with input as {
         "action": "export_data",
         "params": {"destination_country": "GB", "destination_region": "eu-west-2"},
@@ -268,7 +268,7 @@ test_decision_escalate_cross_border_action {
     }
 }
 
-test_decision_escalate_health_data {
+test_decision_escalate_health_data if {
     popia.decision == "escalate" with input as {
         "action": "respond",
         "params": {},
@@ -277,14 +277,14 @@ test_decision_escalate_health_data {
     }
 }
 
-test_decision_audit_pii_access {
+test_decision_audit_pii_access if {
     popia.decision == "audit" with input as {
         "action": "read_customer",
         "params": {}, "output": "", "context": {}
     }
 }
 
-test_decision_allow_unrelated_action {
+test_decision_allow_unrelated_action if {
     popia.decision == "allow" with input as {
         "action": "get_exchange_rate",
         "params": {}, "output": "ZAR/USD: 18.5", "context": {}

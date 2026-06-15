@@ -21,7 +21,7 @@
 
 package agt_policies_nigeria.cbn
 
-import future.keywords.in
+import rego.v1
 
 # ── Thresholds ────────────────────────────────────────────────────
 nip_cap        := 10000000   # CBN NIP single-transaction cap
@@ -52,13 +52,13 @@ bulk_actions := {
 # ── Deny rules ────────────────────────────────────────────────────
 
 # CBN Maker-Checker: agent cannot self-approve transactions
-deny[msg] {
+deny contains msg if {
     input.action in self_approval_actions
     msg := "CBN Maker-Checker: AI agent cannot self-approve financial transactions — segregation of duties violated"
 }
 
 # CBN NIP Cap: single transaction cannot exceed ₦10,000,000
-deny[msg] {
+deny contains msg if {
     input.action in transfer_actions
     input.params.amount > nip_cap
     msg := sprintf(
@@ -68,7 +68,7 @@ deny[msg] {
 }
 
 # CBN NIP Cap: detect >₦10M in text output (defence-in-depth)
-deny[msg] {
+deny contains msg if {
     regex.match(`(?i)(₦|NGN|naira)\s*1[0-9],?[0-9]{3},?[0-9]{3}`, input.output)
     msg := "CBN NIP Framework: Transaction amount exceeding ₦10,000,000 detected in output — blocked"
 }
@@ -76,7 +76,7 @@ deny[msg] {
 # ── Escalate rules (route to human approval queue) ────────────────
 
 # CBN Tier 3: transfers between ₦5M and ₦10M require human approval
-escalate[msg] {
+escalate contains msg if {
     input.action in transfer_actions
     input.params.amount >= tier3_ceiling
     input.params.amount <= nip_cap
@@ -87,7 +87,7 @@ escalate[msg] {
 }
 
 # CBN Tier 2: transfers above Tier 2 ceiling for unverified customers
-escalate[msg] {
+escalate contains msg if {
     input.action in transfer_actions
     input.params.amount > tier2_ceiling
     input.context.kyc_tier == 2
@@ -98,7 +98,7 @@ escalate[msg] {
 }
 
 # CBN Tier 1: any transfer above ₦50,000 for unverified customers
-escalate[msg] {
+escalate contains msg if {
     input.action in transfer_actions
     input.params.amount > tier1_ceiling
     input.context.kyc_tier == 1
@@ -109,19 +109,19 @@ escalate[msg] {
 }
 
 # All refunds require human approval — never autonomous
-escalate[msg] {
+escalate contains msg if {
     input.action in refund_actions
     msg := "CBN / Fraud Controls: Refund action requires human approval — agent cannot autonomously issue refunds"
 }
 
 # Bulk payments always require human approval
-escalate[msg] {
+escalate contains msg if {
     input.action in bulk_actions
     msg := "CBN: Bulk/batch payment requires human approval — aggregate amount must be verified"
 }
 
 # USSD transactions require approval (enforce channel limits)
-escalate[msg] {
+escalate contains msg if {
     startswith(input.action, "ussd_")
     msg := "CBN USSD Guidelines: USSD transaction requires human review — verify ₦20,000 per-transaction / ₦100,000 daily limits"
 }
@@ -129,17 +129,20 @@ escalate[msg] {
 # ── Audit rules (log regardless of outcome) ───────────────────────
 
 # All financial actions must be logged for CBN examination
-audit[msg] {
-    financial_prefixes := {"transfer_", "payment_", "refund_", "reversal_", "settlement_", "credit_", "debit_"}
-    some prefix in financial_prefixes
+_action_has_financial_prefix if {
+    some prefix in {"transfer_", "payment_", "refund_", "reversal_", "settlement_", "credit_", "debit_"}
     startswith(input.action, prefix)
+}
+
+audit contains msg if {
+    _action_has_financial_prefix
     msg := "CBN Record-Keeping: Financial transaction action logged — required for CBN examination and NFIU reporting"
 }
 
 # ── Decision summary (top-level output) ──────────────────────────
 # Callers can query: data.agt_policies_nigeria.cbn.decision
 
-decision := "deny"    { count(deny) > 0 }
-decision := "escalate" { count(deny) == 0; count(escalate) > 0 }
-decision := "audit"    { count(deny) == 0; count(escalate) == 0; count(audit) > 0 }
-decision := "allow"    { count(deny) == 0; count(escalate) == 0; count(audit) == 0 }
+decision := "deny"    if { count(deny) > 0 }
+decision := "escalate" if { count(deny) == 0; count(escalate) > 0 }
+decision := "audit"    if { count(deny) == 0; count(escalate) == 0; count(audit) > 0 }
+decision := "allow"    if { count(deny) == 0; count(escalate) == 0; count(audit) == 0 }

@@ -5,11 +5,11 @@
 package agt_policies_nigeria.nfiu_test
 
 import data.agt_policies_nigeria.nfiu
-import future.keywords.in
+import rego.v1
 
 # ── Deny: NIP cap exceeded ────────────────────────────────────────
 
-test_deny_nip_cap_11M {
+test_deny_nip_cap_11M if {
     count(nfiu.deny) > 0 with input as {
         "action": "nip_transfer",
         "params": {"amount": 11000000, "currency": "NGN"},
@@ -17,7 +17,7 @@ test_deny_nip_cap_11M {
     }
 }
 
-test_deny_nip_cap_15M {
+test_deny_nip_cap_15M if {
     count(nfiu.deny) > 0 with input as {
         "action": "transfer_funds",
         "params": {"amount": 15000000, "currency": "NGN"},
@@ -25,7 +25,7 @@ test_deny_nip_cap_15M {
     }
 }
 
-test_deny_nip_cap_just_over {
+test_deny_nip_cap_just_over if {
     count(nfiu.deny) > 0 with input as {
         "action": "nip_transfer",
         "params": {"amount": 10000001, "currency": "NGN"},
@@ -35,7 +35,7 @@ test_deny_nip_cap_just_over {
 
 # ── Deny: structuring patterns ────────────────────────────────────
 
-test_deny_structuring_split_pattern {
+test_deny_structuring_split_pattern if {
     count(nfiu.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -44,7 +44,7 @@ test_deny_structuring_split_pattern {
     }
 }
 
-test_deny_structuring_break_down {
+test_deny_structuring_break_down if {
     count(nfiu.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -55,7 +55,7 @@ test_deny_structuring_break_down {
 
 # ── Deny: KYC controls ────────────────────────────────────────────
 
-test_deny_kyc_bypass {
+test_deny_kyc_bypass if {
     count(nfiu.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -64,7 +64,7 @@ test_deny_kyc_bypass {
     }
 }
 
-test_deny_unverified_customer_proceed {
+test_deny_unverified_customer_proceed if {
     count(nfiu.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -75,7 +75,7 @@ test_deny_unverified_customer_proceed {
 
 # ── Escalate: CTR threshold (exact numeric) ───────────────────────
 
-test_escalate_ctr_threshold_exact_5M {
+test_escalate_ctr_threshold_exact_5M if {
     count(nfiu.escalate) > 0 with input as {
         "action": "nip_transfer",
         "params": {"amount": 5000000, "currency": "NGN"},
@@ -83,7 +83,7 @@ test_escalate_ctr_threshold_exact_5M {
     }
 }
 
-test_escalate_ctr_threshold_7M {
+test_escalate_ctr_threshold_7M if {
     count(nfiu.escalate) > 0 with input as {
         "action": "nip_transfer",
         "params": {"amount": 7000000, "currency": "NGN"},
@@ -91,7 +91,7 @@ test_escalate_ctr_threshold_7M {
     }
 }
 
-test_escalate_exactly_nip_cap_10M {
+test_escalate_exactly_nip_cap_10M if {
     count(nfiu.escalate) > 0 with input as {
         "action": "transfer_funds",
         "params": {"amount": 10000000, "currency": "NGN"},
@@ -101,7 +101,7 @@ test_escalate_exactly_nip_cap_10M {
 
 # ── Escalate: STR indicators ──────────────────────────────────────
 
-test_escalate_round_trip_pattern {
+test_escalate_round_trip_pattern if {
     count(nfiu.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -110,7 +110,7 @@ test_escalate_round_trip_pattern {
     }
 }
 
-test_escalate_unknown_counterparty {
+test_escalate_unknown_counterparty if {
     count(nfiu.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -119,7 +119,7 @@ test_escalate_unknown_counterparty {
     }
 }
 
-test_escalate_crypto_usdt {
+test_escalate_crypto_usdt if {
     count(nfiu.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -128,7 +128,7 @@ test_escalate_crypto_usdt {
     }
 }
 
-test_escalate_pep_governor {
+test_escalate_pep_governor if {
     count(nfiu.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -137,7 +137,7 @@ test_escalate_pep_governor {
     }
 }
 
-test_escalate_pep_minister {
+test_escalate_pep_minister if {
     count(nfiu.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -148,21 +148,21 @@ test_escalate_pep_minister {
 
 # ── Audit: financial prefix actions ──────────────────────────────
 
-test_audit_transfer_prefix {
+test_audit_transfer_prefix if {
     count(nfiu.audit) > 0 with input as {
         "action": "transfer_batch_001",
         "params": {"amount": 100}, "output": "", "context": {}
     }
 }
 
-test_audit_payment_prefix {
+test_audit_payment_prefix if {
     count(nfiu.audit) > 0 with input as {
         "action": "payment_confirmation",
         "params": {}, "output": "", "context": {}
     }
 }
 
-test_audit_reversal_prefix {
+test_audit_reversal_prefix if {
     count(nfiu.audit) > 0 with input as {
         "action": "reversal_request",
         "params": {}, "output": "", "context": {}
@@ -171,7 +171,7 @@ test_audit_reversal_prefix {
 
 # ── Audit: structuring zone (₦4.5M–₦4.99M) ──────────────────────
 
-test_audit_structuring_zone_4_8M {
+test_audit_structuring_zone_4_8M if {
     count(nfiu.audit) > 0 with input as {
         "action": "nip_transfer",
         "params": {"amount": 4800000, "currency": "NGN"},
@@ -179,7 +179,7 @@ test_audit_structuring_zone_4_8M {
     }
 }
 
-test_audit_structuring_zone_4_5M {
+test_audit_structuring_zone_4_5M if {
     count(nfiu.audit) > 0 with input as {
         "action": "nip_transfer",
         "params": {"amount": 4500000, "currency": "NGN"},
@@ -189,7 +189,7 @@ test_audit_structuring_zone_4_5M {
 
 # ── Allow: normal operations ──────────────────────────────────────
 
-test_allow_small_transfer_50k {
+test_allow_small_transfer_50k if {
     nfiu.decision == "allow" with input as {
         "action": "nip_transfer",
         "params": {"amount": 50000, "currency": "NGN"},
@@ -197,7 +197,7 @@ test_allow_small_transfer_50k {
     }
 }
 
-test_allow_non_financial_action {
+test_allow_non_financial_action if {
     nfiu.decision == "allow" with input as {
         "action": "check_balance",
         "params": {}, "output": "Account balance retrieved.", "context": {}
@@ -206,7 +206,7 @@ test_allow_non_financial_action {
 
 # ── Decision rules ────────────────────────────────────────────────
 
-test_decision_deny_nip_cap {
+test_decision_deny_nip_cap if {
     nfiu.decision == "deny" with input as {
         "action": "nip_transfer",
         "params": {"amount": 12000000, "currency": "NGN"},
@@ -214,7 +214,7 @@ test_decision_deny_nip_cap {
     }
 }
 
-test_decision_deny_structuring {
+test_decision_deny_structuring if {
     nfiu.decision == "deny" with input as {
         "action": "respond",
         "params": {},
@@ -223,7 +223,7 @@ test_decision_deny_structuring {
     }
 }
 
-test_decision_deny_kyc_bypass {
+test_decision_deny_kyc_bypass if {
     nfiu.decision == "deny" with input as {
         "action": "respond",
         "params": {},
@@ -232,7 +232,7 @@ test_decision_deny_kyc_bypass {
     }
 }
 
-test_decision_escalate_ctr_6M {
+test_decision_escalate_ctr_6M if {
     nfiu.decision == "escalate" with input as {
         "action": "nip_transfer",
         "params": {"amount": 6000000, "currency": "NGN"},
@@ -240,7 +240,7 @@ test_decision_escalate_ctr_6M {
     }
 }
 
-test_decision_escalate_pep {
+test_decision_escalate_pep if {
     nfiu.decision == "escalate" with input as {
         "action": "respond",
         "params": {},
@@ -249,7 +249,7 @@ test_decision_escalate_pep {
     }
 }
 
-test_decision_audit_structuring_zone {
+test_decision_audit_structuring_zone if {
     nfiu.decision == "audit" with input as {
         "action": "nip_transfer",
         "params": {"amount": 4800000, "currency": "NGN"},
@@ -257,7 +257,7 @@ test_decision_audit_structuring_zone {
     }
 }
 
-test_decision_allow_small_transfer {
+test_decision_allow_small_transfer if {
     nfiu.decision == "allow" with input as {
         "action": "nip_transfer",
         "params": {"amount": 30000, "currency": "NGN"},

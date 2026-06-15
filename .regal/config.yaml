@@ -1,0 +1,11 @@
+rules:
+  idiomatic:
+    # Flat directory layout under policies/rego/ is intentional — all policy packs
+    # in one location for direct opa eval usage. Package names use dot-notation
+    # (agt_policies_nigeria.*, agt_policies_africa.*) not directory hierarchy.
+    directory-package-mismatch:
+      level: ignore
+    # Policy packs are libraries, not executables — no single entrypoint by design.
+    # Callers query data.agt_policies_nigeria.<pack>.decision directly.
+    no-defined-entrypoint:
+      level: ignore

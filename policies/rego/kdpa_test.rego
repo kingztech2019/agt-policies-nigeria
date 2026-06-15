@@ -5,11 +5,11 @@
 package agt_policies_africa.kdpa_test
 
 import data.agt_policies_africa.kdpa
-import future.keywords.in
+import rego.v1
 
 # ── Deny: breach suppression ──────────────────────────────────────
 
-test_deny_breach_suppression {
+test_deny_breach_suppression if {
     count(kdpa.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -18,7 +18,7 @@ test_deny_breach_suppression {
     }
 }
 
-test_deny_hide_breach {
+test_deny_hide_breach if {
     count(kdpa.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -29,7 +29,7 @@ test_deny_hide_breach {
 
 # ── Deny: cross-border to non-permitted region ────────────────────
 
-test_deny_us_east_1 {
+test_deny_us_east_1 if {
     count(kdpa.deny) > 0 with input as {
         "action": "export_data",
         "params": {"destination_region": "us-east-1", "destination_country": "US", "record_count": 5},
@@ -37,7 +37,7 @@ test_deny_us_east_1 {
     }
 }
 
-test_deny_eu_west_1 {
+test_deny_eu_west_1 if {
     count(kdpa.deny) > 0 with input as {
         "action": "upload_to_cloud",
         "params": {"destination_region": "eu-west-1", "destination_country": "IE", "record_count": 5},
@@ -47,7 +47,7 @@ test_deny_eu_west_1 {
 
 # ── Allow: permitted regions ──────────────────────────────────────
 
-test_allow_kenya_region {
+test_allow_kenya_region if {
     kdpa.decision == "allow" with input as {
         "action": "export_data",
         "params": {"destination_region": "kenya", "destination_country": "KE", "record_count": 5},
@@ -55,7 +55,7 @@ test_allow_kenya_region {
     }
 }
 
-test_allow_af_south_1 {
+test_allow_af_south_1 if {
     kdpa.decision == "allow" with input as {
         "action": "export_data",
         "params": {"destination_region": "af-south-1", "destination_country": "KE", "record_count": 5},
@@ -65,7 +65,7 @@ test_allow_af_south_1 {
 
 # ── Deny: processing without consent ─────────────────────────────
 
-test_deny_processing_without_consent {
+test_deny_processing_without_consent if {
     count(kdpa.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -76,7 +76,7 @@ test_deny_processing_without_consent {
 
 # ── Deny: biometric data in output ───────────────────────────────
 
-test_deny_fingerprint_in_output {
+test_deny_fingerprint_in_output if {
     count(kdpa.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -85,7 +85,7 @@ test_deny_fingerprint_in_output {
     }
 }
 
-test_deny_facial_recognition_in_output {
+test_deny_facial_recognition_in_output if {
     count(kdpa.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -96,7 +96,7 @@ test_deny_facial_recognition_in_output {
 
 # ── Deny: national ID / KRA PIN in output ────────────────────────
 
-test_deny_national_id_in_output {
+test_deny_national_id_in_output if {
     count(kdpa.deny) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -107,7 +107,7 @@ test_deny_national_id_in_output {
 
 # ── Deny: large record count ──────────────────────────────────────
 
-test_deny_record_count_1001 {
+test_deny_record_count_1001 if {
     count(kdpa.deny) > 0 with input as {
         "action": "export_data",
         "params": {"destination_region": "us-east-1", "destination_country": "US", "record_count": 1001},
@@ -117,7 +117,7 @@ test_deny_record_count_1001 {
 
 # ── Escalate: health/medical data ────────────────────────────────
 
-test_escalate_health_data {
+test_escalate_health_data if {
     count(kdpa.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -126,7 +126,7 @@ test_escalate_health_data {
     }
 }
 
-test_escalate_mental_health {
+test_escalate_mental_health if {
     count(kdpa.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -137,7 +137,7 @@ test_escalate_mental_health {
 
 # ── Escalate: special category data ──────────────────────────────
 
-test_escalate_ethnic_origin {
+test_escalate_ethnic_origin if {
     count(kdpa.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -146,7 +146,7 @@ test_escalate_ethnic_origin {
     }
 }
 
-test_escalate_religion {
+test_escalate_religion if {
     count(kdpa.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -157,7 +157,7 @@ test_escalate_religion {
 
 # ── Escalate: cross-border language in output ─────────────────────
 
-test_escalate_cross_border_output {
+test_escalate_cross_border_output if {
     count(kdpa.escalate) > 0 with input as {
         "action": "respond",
         "params": {},
@@ -168,7 +168,7 @@ test_escalate_cross_border_output {
 
 # ── Escalate: missing destination metadata ────────────────────────
 
-test_escalate_missing_destination {
+test_escalate_missing_destination if {
     count(kdpa.escalate) > 0 with input as {
         "action": "export_data",
         "params": {"record_count": 10},
@@ -178,7 +178,7 @@ test_escalate_missing_destination {
 
 # ── Escalate: moderate record count ──────────────────────────────
 
-test_escalate_record_count_500 {
+test_escalate_record_count_500 if {
     count(kdpa.escalate) > 0 with input as {
         "action": "export_data",
         "params": {"destination_region": "us-east-1", "destination_country": "US", "record_count": 500},
@@ -186,7 +186,7 @@ test_escalate_record_count_500 {
     }
 }
 
-test_escalate_record_count_101 {
+test_escalate_record_count_101 if {
     count(kdpa.escalate) > 0 with input as {
         "action": "relay_data",
         "params": {"destination_region": "us-east-1", "destination_country": "US", "record_count": 101},
@@ -196,7 +196,7 @@ test_escalate_record_count_101 {
 
 # ── Escalate: bulk export action ─────────────────────────────────
 
-test_escalate_bulk_export {
+test_escalate_bulk_export if {
     count(kdpa.escalate) > 0 with input as {
         "action": "bulk_export",
         "params": {}, "output": "", "context": {}
@@ -205,21 +205,21 @@ test_escalate_bulk_export {
 
 # ── Audit: PII access ─────────────────────────────────────────────
 
-test_audit_read_user {
+test_audit_read_user if {
     count(kdpa.audit) > 0 with input as {
         "action": "read_user",
         "params": {}, "output": "", "context": {}
     }
 }
 
-test_audit_get_customer {
+test_audit_get_customer if {
     count(kdpa.audit) > 0 with input as {
         "action": "get_customer",
         "params": {}, "output": "", "context": {}
     }
 }
 
-test_audit_update_user {
+test_audit_update_user if {
     count(kdpa.audit) > 0 with input as {
         "action": "update_user",
         "params": {}, "output": "", "context": {}
@@ -228,7 +228,7 @@ test_audit_update_user {
 
 # ── Allow: normal operations ──────────────────────────────────────
 
-test_allow_normal_action {
+test_allow_normal_action if {
     kdpa.decision == "allow" with input as {
         "action": "get_product_list",
         "params": {}, "output": "Here are available products.", "context": {}
@@ -237,7 +237,7 @@ test_allow_normal_action {
 
 # ── Decision rules ────────────────────────────────────────────────
 
-test_decision_deny_cross_border {
+test_decision_deny_cross_border if {
     kdpa.decision == "deny" with input as {
         "action": "export_data",
         "params": {"destination_region": "us-east-1", "destination_country": "US", "record_count": 5},
@@ -245,7 +245,7 @@ test_decision_deny_cross_border {
     }
 }
 
-test_decision_deny_biometric {
+test_decision_deny_biometric if {
     kdpa.decision == "deny" with input as {
         "action": "respond",
         "params": {},
@@ -254,7 +254,7 @@ test_decision_deny_biometric {
     }
 }
 
-test_decision_escalate_health_data {
+test_decision_escalate_health_data if {
     kdpa.decision == "escalate" with input as {
         "action": "respond",
         "params": {},
@@ -263,7 +263,7 @@ test_decision_escalate_health_data {
     }
 }
 
-test_decision_escalate_missing_destination {
+test_decision_escalate_missing_destination if {
     kdpa.decision == "escalate" with input as {
         "action": "export_data",
         "params": {"record_count": 5},
@@ -271,14 +271,14 @@ test_decision_escalate_missing_destination {
     }
 }
 
-test_decision_audit_pii_access {
+test_decision_audit_pii_access if {
     kdpa.decision == "audit" with input as {
         "action": "lookup_account",
         "params": {}, "output": "", "context": {}
     }
 }
 
-test_decision_allow_unrelated_action {
+test_decision_allow_unrelated_action if {
     kdpa.decision == "allow" with input as {
         "action": "check_service_status",
         "params": {}, "output": "", "context": {}

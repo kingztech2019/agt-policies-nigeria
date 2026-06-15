@@ -25,7 +25,7 @@
 
 package agt_policies_nigeria.ndpa
 
-import future.keywords.in
+import rego.v1
 
 # ── Permitted regions (Nigeria-hosted or adequacy-approved) ──────
 # Only Nigerian-hosted infrastructure is permitted by default.
@@ -54,7 +54,7 @@ bulk_export_actions := {
 # ── Deny rules ────────────────────────────────────────────────────
 
 # NDPA s.25: Block transfer to non-permitted region (structured check)
-deny[msg] {
+deny contains msg if {
     input.action in transfer_actions
     input.params.destination_region != null
     not input.params.destination_region in permitted_regions
@@ -65,7 +65,7 @@ deny[msg] {
 }
 
 # NDPA s.25: Block transfer to non-Nigerian country code (structured check)
-deny[msg] {
+deny contains msg if {
     input.action in transfer_actions
     input.params.destination_country != null
     input.params.destination_country != "NG"
@@ -77,13 +77,13 @@ deny[msg] {
 }
 
 # NDPA s.24: Block bulk data exports (data minimisation)
-deny[msg] {
+deny contains msg if {
     input.action in bulk_export_actions
     msg := "NDPA s.24: Bulk personal data export violates data minimisation principle — not permitted without documented legal basis"
 }
 
 # NDPA s.24: Block large record exports (>1000 records presumptively disproportionate)
-deny[msg] {
+deny contains msg if {
     input.action in transfer_actions
     input.params.record_count > 1000
     msg := sprintf(
@@ -93,13 +93,13 @@ deny[msg] {
 }
 
 # NDPA Schedule 1: Block biometric data transmission
-deny[msg] {
+deny contains msg if {
     regex.match(`(?i)(fingerprint|facial\s+recognition|retina|iris\s+scan|voice\s+print|biometric\s+(template|hash|data))`, input.output)
     msg := "NDPA Schedule 1: Biometric data detected — must not be transmitted by AI agents without documented lawful basis"
 }
 
 # NDPA s.22(5): Block breach suppression
-deny[msg] {
+deny contains msg if {
     regex.match(`(?i)(don'?t\s+(report|notify|disclose)|hide\s+(the\s+)?(breach|incident)|suppress\s+(alert|notification)|delay\s+(breach|incident)\s+report)`, input.output)
     msg := "NDPA s.22(5): Agent cannot suppress breach notifications — 72-hour NDPC reporting obligation applies"
 }
@@ -107,7 +107,7 @@ deny[msg] {
 # ── Escalate rules ────────────────────────────────────────────────
 
 # NDPA s.25: Cross-border transfer with missing destination info — cannot verify
-escalate[msg] {
+escalate contains msg if {
     input.action in transfer_actions
     not input.params.destination_region
     not input.params.destination_country
@@ -115,19 +115,19 @@ escalate[msg] {
 }
 
 # NDPA s.25: Detected cross-border language in output (defence-in-depth)
-escalate[msg] {
+escalate contains msg if {
     regex.match(`(?i)(send(ing)?|transfer(ring)?|export(ing)?).{0,60}(outside\s+nigeria|cross.?border|international\s+transfer|offshore)`, input.output)
     msg := "NDPA s.25: Cross-border data transfer language detected in output — requires NDPC adequacy verification"
 }
 
 # NDPA Schedule 1: Health/medical data requires approval before processing
-escalate[msg] {
+escalate contains msg if {
     regex.match(`(?i)(medical\s+record|health\s+(condition|status|data)|HIV|mental\s+health|disability|prescription)`, input.output)
     msg := "NDPA Schedule 1: Health/medical data detected — sensitive personal data requires explicit lawful basis"
 }
 
 # NDPA s.24: Moderate record count (100–1000) requires approval
-escalate[msg] {
+escalate contains msg if {
     input.action in transfer_actions
     input.params.record_count > 100
     input.params.record_count <= 1000
@@ -140,21 +140,21 @@ escalate[msg] {
 # ── Audit rules ───────────────────────────────────────────────────
 
 # NDPA s.30: All PII access must be logged for NDPC accountability
-audit[msg] {
+audit contains msg if {
     pii_actions := {"read_user", "get_customer", "lookup_account", "fetch_profile", "query_personal", "access_pii"}
     input.action in pii_actions
     msg := "NDPA s.30: Personal data access logged — accountability audit trail for NDPC compliance"
 }
 
 # NDPA s.30: All PII modifications must be logged
-audit[msg] {
+audit contains msg if {
     pii_update_actions := {"update_user", "modify_profile", "patch_account", "edit_customer", "change_personal"}
     input.action in pii_update_actions
     msg := "NDPA s.30: Personal data modification logged — accountability audit trail for NDPC compliance"
 }
 
 # ── Decision summary ─────────────────────────────────────────────
-decision := "deny"     { count(deny) > 0 }
-decision := "escalate" { count(deny) == 0; count(escalate) > 0 }
-decision := "audit"    { count(deny) == 0; count(escalate) == 0; count(audit) > 0 }
-decision := "allow"    { count(deny) == 0; count(escalate) == 0; count(audit) == 0 }
+decision := "deny"     if { count(deny) > 0 }
+decision := "escalate" if { count(deny) == 0; count(escalate) > 0 }
+decision := "audit"    if { count(deny) == 0; count(escalate) == 0; count(audit) > 0 }
+decision := "allow"    if { count(deny) == 0; count(escalate) == 0; count(audit) == 0 }

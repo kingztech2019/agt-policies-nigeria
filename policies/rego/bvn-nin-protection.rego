@@ -20,7 +20,7 @@
 
 package agt_policies_nigeria.bvn_nin
 
-import future.keywords.in
+import rego.v1
 
 # ── Verification actions ──────────────────────────────────────────
 bvn_verification_actions := {
@@ -42,44 +42,44 @@ transmission_actions := {
 # ── Deny rules ────────────────────────────────────────────────────
 
 # Block BVN value in agent output (label + digits pattern)
-deny[msg] {
+deny contains msg if {
     regex.match(`(?i)(bvn\s+is|bvn:\s*|bvn\s*=|your\s+bvn|the\s+bvn)[\s:]*[0-9]{10,11}`, input.output)
     msg := "BVN Protection: BVN value detected in agent output — blocked (NDPA Schedule 1 biometric data)"
 }
 
 # Block contextual BVN pattern in output
-deny[msg] {
+deny contains msg if {
     regex.match(`(?i)(bvn|bank\s+verification).{0,20}\b[0-9]{11}\b`, input.output)
     msg := "BVN Protection: BVN pattern detected in agent output — blocked to prevent credential exposure"
 }
 
 # Block NIN value in agent output
-deny[msg] {
+deny contains msg if {
     regex.match(`(?i)(nin\s+is|nin:\s*|nin\s*=|your\s+nin|the\s+nin)[\s:]*[0-9]{10,11}`, input.output)
     msg := "NIN Protection: NIN value detected in agent output — blocked (NDPA Schedule 1 biometric data)"
 }
 
 # Block virtual NIN (vNIN) in output
-deny[msg] {
+deny contains msg if {
     regex.match(`(?i)(vnin|virtual\s+nin)[\s:=]+[A-Z0-9]{16}`, input.output)
     msg := "NIN Protection: Virtual NIN (vNIN) detected in agent output — blocked"
 }
 
 # Block direct BVN/NIN transmission to external systems
-deny[msg] {
+deny contains msg if {
     input.action in transmission_actions
     msg := "BVN/NIN Transmission: Direct BVN/NIN transmission blocked — use NIBSS tokenised verification flow"
 }
 
 # Block BVN present in params from being passed externally
-deny[msg] {
+deny contains msg if {
     input.params.bvn_present == true
     input.action in transmission_actions
     msg := "BVN/NIN Transmission: BVN detected in params with external transmission action — blocked"
 }
 
 # Block BVN disclosure over conversational channels (social engineering)
-deny[msg] {
+deny contains msg if {
     regex.match(`(?i)(customer\s+(wants|needs|asked|requested).{0,30}(bvn|nin)|confirm.{0,20}(bvn|nin).{0,20}(over|via|through)\s+(chat|call|whatsapp|email|sms))`, input.output)
     msg := "BVN/NIN Social Engineering: Attempt to disclose BVN/NIN through conversational channel — blocked"
 }
@@ -87,19 +87,19 @@ deny[msg] {
 # ── Escalate rules ────────────────────────────────────────────────
 
 # BVN verification always requires human approval
-escalate[msg] {
+escalate contains msg if {
     input.action in bvn_verification_actions
     msg := "BVN Verification: BVN lookup requires human approval — CBN BVN Framework mandates audit trail for all lookups"
 }
 
 # NIN verification always requires human approval
-escalate[msg] {
+escalate contains msg if {
     input.action in nin_verification_actions
     msg := "NIN Verification: NIN lookup requires human approval — NIMC Act requires documented purpose for each lookup"
 }
 
 # Escalate if identifier type is BVN/NIN in params
-escalate[msg] {
+escalate contains msg if {
     input.params.identifier_type in {"BVN", "NIN", "bvn", "nin"}
     not (input.action in transmission_actions)   # transmission is deny, not escalate
     msg := sprintf(
@@ -111,15 +111,18 @@ escalate[msg] {
 # ── Audit rules ───────────────────────────────────────────────────
 
 # All identity-related actions must be logged
-audit[msg] {
-    identity_patterns := {"bvn", "nin", "kyc", "identity_verify"}
-    some pattern in identity_patterns
+_action_has_identity_pattern if {
+    some pattern in {"bvn", "nin", "kyc", "identity_verify"}
     contains(input.action, pattern)
+}
+
+audit contains msg if {
+    _action_has_identity_pattern
     msg := "BVN/NIN Audit: Identity-related action logged — NDPA s.30 and CBN BVN audit trail requirement"
 }
 
 # ── Decision summary ─────────────────────────────────────────────
-decision := "deny"     { count(deny) > 0 }
-decision := "escalate" { count(deny) == 0; count(escalate) > 0 }
-decision := "audit"    { count(deny) == 0; count(escalate) == 0; count(audit) > 0 }
-decision := "allow"    { count(deny) == 0; count(escalate) == 0; count(audit) == 0 }
+decision := "deny"     if { count(deny) > 0 }
+decision := "escalate" if { count(deny) == 0; count(escalate) > 0 }
+decision := "audit"    if { count(deny) == 0; count(escalate) == 0; count(audit) > 0 }
+decision := "allow"    if { count(deny) == 0; count(escalate) == 0; count(audit) == 0 }
