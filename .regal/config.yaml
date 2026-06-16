@@ -2,10 +2,27 @@ rules:
   idiomatic:
     # Flat directory layout under policies/rego/ is intentional — all policy packs
     # in one location for direct opa eval usage. Package names use dot-notation
-    # (agt_policies_nigeria.*, agt_policies_africa.*) not directory hierarchy.
+    # (agt_policies_nigeria.*, agt_policies_africa.*, agt_policies_agent.*) not directory hierarchy.
     directory-package-mismatch:
       level: ignore
     # Policy packs are libraries, not executables — no single entrypoint by design.
-    # Callers query data.agt_policies_nigeria.<pack>.decision directly.
+    # Callers query data.agt_policies_*.*.decision directly.
     no-defined-entrypoint:
+      level: ignore
+  imports:
+    # data.config.* paths are runtime deployer configuration injected at evaluation
+    # time — not bundled policy data. Regal cannot resolve them statically by design.
+    # Callers pass config via: opa eval -d data.json or OPA bundle data layer.
+    unresolved-reference:
+      level: ignore
+  style:
+    # Regulatory compliance error messages include citation codes, regulation names,
+    # and section references that are necessarily verbose (e.g. "CBN FPR/DIR/GEN/CIR/07/003").
+    # Truncating them would reduce the utility of policy decisions for compliance officers.
+    line-length:
+      level: ignore
+    # Universal policy packs use `else :=` to fall back to named constant rules
+    # (e.g. _default_patterns). The `default` keyword cannot reference another rule,
+    # so `else :=` is the only way to keep defaults readable and DRY.
+    default-over-else:
       level: ignore

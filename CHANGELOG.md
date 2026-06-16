@@ -7,6 +7,28 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.2.0] — 2026-06-16
+
+Universal agent safety controls — 5 new policy packs applicable to any AI agent.
+
+### Added
+
+- **Prompt Injection** (`agent-prompt-injection.yaml` + `.rego`) — blocks 19 known injection phrases; escalates structural markers (`[INST]`, `<|system|>`, `###System`). Configurable pattern sets via `data.config.prompt_injection.*`. 22 tests.
+- **PII Leakage** (`agent-pii-leakage.yaml` + `.rego`) — scans agent output for credit card numbers, BVN/NIN (11-digit), SA ID (13-digit), email, and phone before delivery. Deployer allow-list for verified disclosure flows. 21 tests.
+- **Tool Permissions** (`agent-tool-permissions.yaml` + `.rego`) — allow/deny/restricted-list tool governance. Default restricted set includes `delete_record`, `execute_code`, `shell_exec`, `deploy`, `grant_admin` and 10 others. 20 tests.
+- **Human Approval** (`agent-human-approval.yaml` + `.rego`) — four escalation triggers: explicit action names, context `risk_level`, amount threshold (default 1M, override to 5M for CBN), bulk record count (default 500). 21 tests.
+- **Model Routing Controls** (`agent-model-routing.yaml` + `.rego`) — prevents sensitive tasks (`pii_processing`, `financial_decision`, `fraud_detection`, `kyc_review`, `aml_screening`, 9 total) from using unapproved models. Audits approved model usage. 22 tests.
+- **Jurisdiction router updated** — `universal_policies` set always included in `applicable_policies`. NG now routes 9 packs (4 regulatory + 5 universal); KE/ZA route 6. Router tests updated to reflect new counts.
+- **Regal config updated** — `line-length`, `default-over-else`, `unresolved-reference` (data.config paths) suppressed with explanatory comments.
+
+### Changed
+
+- README: description updated from "African regulatory compliance" to "two-layer governance" (universal safety + regulatory)
+- README: Coverage section split into Universal Agent Safety Controls and African Regulatory Compliance tables
+- `.regal/config.yaml`: 3 additional suppression entries with documented rationale
+
+---
+
 ## [1.1.0] — 2026-06-15
 
 Framework integrations: CrewAI and Microsoft AutoGen.

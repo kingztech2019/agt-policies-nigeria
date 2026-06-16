@@ -1,0 +1,114 @@
+# agt-policies-nigeria
+# AI Agent Human Approval Controls — Universal Safety Control
+#
+# Regulatory alignment:
+#   OWASP Agentic AI Top 10    — LLM09 Overreliance / LLM06 Excessive Agency
+#   EU AI Act Art. 14          — human oversight for high-risk AI systems
+#   NIST AI RMF                — GOVERN 1.3, MANAGE 2.4
+#   CBN Maker-Checker Requirement — dual authorisation for financial transactions
+#   NFIU MLPPA 2022            — human review for Suspicious Transaction Reports
+#
+# ⚠️  This is a universal safety control — jurisdiction-independent.
+# Ensures a human authorises high-risk, high-value, or sensitive actions
+# before an AI agent executes them autonomously.
+#
+# Four escalation triggers:
+#   1. Action name is on the required_actions list
+#   2. context.risk_level is in the approval-required risk levels set
+#   3. params.amount exceeds the configured amount threshold
+#   4. params.record_count exceeds the configured bulk operation threshold
+
+version: "1.0"
+name: agent-human-approval
+description: >
+  Requires human authorisation before an AI agent executes high-risk,
+  high-value, or sensitive actions. Configurable triggers: explicit action
+  names, context risk level, transaction amount threshold, and bulk operation
+  record count threshold.
+
+config:
+  # Runtime configuration keys (passed via OPA data.config.human_approval.*)
+  required_actions:
+    description: >
+      Set of action names that always require human approval, regardless of
+      amount or risk level. Defaults to account deletion, bulk operations,
+      permission changes, and financial self-approval.
+    example: ["delete_account", "close_account", "grant_admin", "deploy_code"]
+  risk_levels:
+    description: >
+      Set of context.risk_level values that require human approval.
+      Defaults to ["critical", "high"]. Callers set risk_level in context.
+    example: ["critical", "high"]
+  amount_threshold:
+    description: >
+      Numeric amount above which transactions require human approval.
+      Units are in the local currency of the deployer. Default: 1,000,000.
+      Nigerian deployments should set to 5,000,000 (CBN CTR threshold).
+    example: 5000000
+  bulk_threshold:
+    description: >
+      Record count above which bulk operations require human approval.
+      Default: 500 records.
+    example: 500
+
+rules:
+
+  # =========================================================================
+  # Escalate: Explicit Approval-Required Action
+  # =========================================================================
+
+  - name: human-approval-required-action
+    description: >
+      The action is on the deployer-configured required_actions list.
+      Must be authorised by a human before the agent executes it.
+    action: escalate
+    priority: 100
+    default_required_actions:
+      - delete_account
+      - close_account
+      - bulk_delete
+      - mass_update
+      - send_bulk_email
+      - send_bulk_sms
+      - deploy_code
+      - modify_permissions
+      - grant_admin
+      - revoke_access
+      - initiate_bulk_refund
+      - approve_transfer
+      - self_approve
+
+  # =========================================================================
+  # Escalate: High Risk Level
+  # =========================================================================
+
+  - name: human-approval-risk-level
+    description: >
+      context.risk_level is set to a value that requires human approval
+      (default: "critical" or "high"). Callers are responsible for
+      assigning risk levels based on action classification.
+    action: escalate
+    priority: 90
+
+  # =========================================================================
+  # Escalate: Amount Threshold
+  # =========================================================================
+
+  - name: human-approval-amount-threshold
+    description: >
+      Transaction amount (params.amount) exceeds the configured threshold.
+      Default threshold is 1,000,000 units. Nigerian fintech deployments
+      should override to 5,000,000 (CBN CTR reporting threshold).
+    action: escalate
+    priority: 85
+
+  # =========================================================================
+  # Escalate: Bulk Operation Threshold
+  # =========================================================================
+
+  - name: human-approval-bulk-threshold
+    description: >
+      Bulk operation record count (params.record_count) exceeds the
+      configured threshold. Default: 500 records.
+    action: escalate
+    priority: 80

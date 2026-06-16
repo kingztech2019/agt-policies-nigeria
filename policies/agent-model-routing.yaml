@@ -1,0 +1,113 @@
+# agt-policies-nigeria
+# AI Agent Model Routing Controls — Universal Safety Control
+#
+# Regulatory alignment:
+#   OWASP Agentic AI Top 10    — LLM03 Model Theft / LLM05 Supply Chain
+#   NIST AI RMF                — GOVERN 1.1, GOVERN 2.2
+#   EU AI Act Art. 9           — risk management for high-risk AI systems
+#   NDPA 2023 s.24             — appropriate technical measures for processing
+#   CBN Risk-Based Supervision — model risk management requirements
+#
+# ⚠️  This is a universal safety control — jurisdiction-independent.
+# Governs which AI models may process which task types.
+# Prevents sensitive workloads (PII processing, financial decisions,
+# fraud detection) from being routed to unapproved or unverified models.
+#
+# Governance flow:
+#   model on banned list                                    → deny
+#   sensitive task + unapproved model                       → deny
+#   sensitive task + no model specified                     → escalate
+#   sensitive task + approved model                         → audit
+#   non-sensitive task                                      → allow
+
+version: "1.0"
+name: agent-model-routing
+description: >
+  Controls which AI models may process which task types. Prevents sensitive
+  workloads (PII processing, financial decisions, fraud detection, AML screening,
+  KYC review) from being routed to unapproved, unverified, or banned models.
+  Deployer-configurable model lists and sensitive task type classifications.
+
+config:
+  # Runtime configuration keys (passed via OPA data.config.model_routing.*)
+  sensitive_task_types:
+    description: >
+      Set of task_type values (from context.task_type) that require an
+      explicitly approved model. Defaults to: pii_processing, financial_decision,
+      fraud_detection, medical_advice, legal_advice, authentication,
+      credit_scoring, kyc_review, aml_screening.
+    example: ["pii_processing", "financial_decision", "hr_decision"]
+  approved_sensitive_models:
+    description: >
+      Set of model identifiers approved to process sensitive tasks.
+      Defaults to a list of major frontier models. Override to restrict
+      to on-premises or enterprise-contracted models only.
+    example: ["gpt-4o", "claude-opus-4", "internal-compliant-model-v2"]
+  banned_models:
+    description: >
+      Set of model identifiers unconditionally blocked from any task.
+      Use to prevent use of deprecated, unverified, or non-compliant models.
+    example: ["gpt-3.5-turbo", "unknown-model-xyz"]
+  require_model_on_sensitive:
+    description: >
+      Boolean. If true (default), a sensitive task with no model specified
+      in context.model escalates rather than allows.
+    example: true
+
+rules:
+
+  # =========================================================================
+  # Deny: Banned Model
+  # =========================================================================
+
+  - name: model-routing-banned
+    description: >
+      The requested model (context.model) is on the banned list.
+      Blocked unconditionally regardless of task type.
+    action: deny
+    priority: 100
+
+  # =========================================================================
+  # Deny: Unapproved Model on Sensitive Task
+  # =========================================================================
+
+  - name: model-routing-unapproved-for-sensitive-task
+    description: >
+      A sensitive task type (pii_processing, financial_decision, etc.) was
+      requested with a model that is not on the approved_sensitive_models list.
+      Use an approved frontier or enterprise-contracted model instead.
+    action: deny
+    priority: 90
+    default_sensitive_task_types:
+      - pii_processing
+      - financial_decision
+      - fraud_detection
+      - medical_advice
+      - legal_advice
+      - authentication
+      - credit_scoring
+      - kyc_review
+      - aml_screening
+
+  # =========================================================================
+  # Escalate: Sensitive Task with No Model Specified
+  # =========================================================================
+
+  - name: model-routing-no-model-for-sensitive
+    description: >
+      A sensitive task type was requested but context.model was not specified
+      or was empty. Escalate to ensure a human explicitly selects an approved
+      model before the task proceeds.
+    action: escalate
+    priority: 85
+
+  # =========================================================================
+  # Audit: Sensitive Task with Approved Model
+  # =========================================================================
+
+  - name: model-routing-audit-approved-sensitive
+    description: >
+      A sensitive task type was processed with an approved model.
+      Log for model governance and compliance audit trail.
+    action: audit
+    priority: 50

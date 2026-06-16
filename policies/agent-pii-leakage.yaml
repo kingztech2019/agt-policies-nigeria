@@ -1,0 +1,108 @@
+# agt-policies-nigeria
+# AI Agent PII Leakage Prevention — Universal Safety Control
+#
+# Regulatory alignment:
+#   OWASP Agentic AI Top 10    — LLM06 Sensitive Information Disclosure
+#   NDPA 2023 s.25             — data subjects' right to protection of personal data
+#   POPIA s.19                 — security safeguards for personal information
+#   Kenya DPA s.25             — controller must implement appropriate safeguards
+#   CBN BVN Framework          — BVN must not be exposed in agent responses
+#
+# ⚠️  This is a universal safety control — jurisdiction-independent.
+# Scans agent OUTPUT (not input) for PII patterns before delivery.
+# Configure extra patterns and allowed actions via the OPA data.config layer.
+#
+# Governance flow:
+#   credit card / BVN/NIN / SA ID / custom high-sensitivity PII → deny
+#   email address / phone number                                 → escalate
+#   PII-capable action with clean output                         → audit
+#   no PII detected, non-PII action                              → allow
+
+version: "1.0"
+name: agent-pii-leakage
+description: >
+  Scans AI agent output for personally identifiable information before
+  it is delivered to end users or downstream systems. Detects credit card
+  numbers, BVN/NIN (11-digit identifiers), South African ID numbers,
+  email addresses, and phone numbers. Deployer-configurable extra patterns
+  and per-action PII allow-lists.
+
+config:
+  # Runtime configuration keys (passed via OPA data.config.pii_leakage.*)
+  extra_patterns:
+    description: >
+      Set of additional RE2 regex patterns to detect as deny-level PII
+      (e.g. passport numbers, national IDs for other jurisdictions).
+    example: ["passport number: [A-Z][0-9]{8}", "TIN: [0-9]{11}"]
+  allowed_actions:
+    description: >
+      Set of action names permitted to include PII in output. Use for
+      verified disclosure flows (e.g. BVN confirmation to account owner).
+    example: ["bvn_verification_response", "send_kyc_report"]
+
+rules:
+
+  # =========================================================================
+  # Deny: High-Sensitivity PII
+  # =========================================================================
+
+  - name: pii-leakage-credit-card
+    description: >
+      Credit or debit card number detected in agent output (Visa, Mastercard,
+      Amex). PCI DSS and NDPA prohibit exposure of card numbers in agent responses.
+    action: deny
+    priority: 100
+    pattern: "credit card number (Visa 4xxx, Mastercard 5xxx, Amex 3xxx)"
+
+  - name: pii-leakage-bvn-nin
+    description: >
+      11-digit BVN/NIN-format identifier detected in agent output.
+      CBN BVN Framework and NDPA 2023 prohibit exposure of BVN/NIN.
+    action: deny
+    priority: 100
+    pattern: "11-digit numeric identifier (\\b[0-9]{11}\\b)"
+
+  - name: pii-leakage-sa-id
+    description: >
+      South African 13-digit ID number detected in agent output.
+      POPIA s.19 prohibits unnecessary exposure of national identification numbers.
+    action: deny
+    priority: 100
+    pattern: "SA ID (YYMMDD + 7 digits, 13 total)"
+
+  # =========================================================================
+  # Escalate: Medium-Sensitivity PII
+  # =========================================================================
+
+  - name: pii-leakage-email
+    description: >
+      Email address detected in agent output. Route to human review —
+      may be legitimate in some contexts but requires verification.
+    action: escalate
+    priority: 80
+
+  - name: pii-leakage-phone
+    description: >
+      Phone number detected in agent output. Route to human review —
+      may be legitimate in some contexts but requires verification.
+    action: escalate
+    priority: 80
+
+  # =========================================================================
+  # Audit: PII-Capable Action
+  # =========================================================================
+
+  - name: pii-leakage-audit-capable-action
+    description: >
+      Action type is capable of returning personal data (respond_to_customer,
+      export_data, read_customer, etc.) but no PII pattern was matched.
+      Log for compliance audit trail.
+    action: audit
+    priority: 50
+    applies_to_actions:
+      - respond_to_customer
+      - send_email
+      - send_sms
+      - generate_report
+      - export_data
+      - read_customer

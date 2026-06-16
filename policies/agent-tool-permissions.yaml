@@ -1,0 +1,77 @@
+# agt-policies-nigeria
+# AI Agent Tool Permission Controls — Universal Safety Control
+#
+# Regulatory alignment:
+#   OWASP Agentic AI Top 10    — LLM08 Excessive Agency
+#   NIST AI RMF                — GOVERN 1.3, MANAGE 1.3
+#   Microsoft AGT              — Tool Use Safety pillar
+#   EU AI Act Art. 9           — risk management for high-risk AI systems
+#
+# ⚠️  This is a universal safety control — jurisdiction-independent.
+# Controls which tools an AI agent may call. Supports three modes:
+#   1. Deny list only  — all tools allowed except those explicitly denied
+#   2. Allow list      — only listed tools permitted (deny anything else)
+#   3. Restricted list — these tools require human approval before execution
+#
+# Configure via OPA data.config.tool_permissions.* at runtime.
+
+version: "1.0"
+name: agent-tool-permissions
+description: >
+  Governs which tools an AI agent is permitted to call. Prevents excessive
+  agency by blocking explicitly denied tools and escalating destructive or
+  high-risk tools (delete, exec, deploy, permissions) to human approval.
+  Supports allowlist mode for strict tool confinement.
+
+config:
+  # Runtime configuration keys (passed via OPA data.config.tool_permissions.*)
+  denied:
+    description: >
+      Set of tool names that are unconditionally blocked. Takes precedence
+      over allowed and restricted lists.
+    example: ["wipe_database", "factory_reset", "delete_all_records"]
+  allowed:
+    description: >
+      Set of tool names permitted in allowlist mode. When non-empty, any tool
+      NOT in this set is denied (except items in the denied list which are
+      denied regardless). Empty set = allowlist mode off (deny list only).
+    example: ["read_customer", "read_balance", "list_transactions"]
+  restricted:
+    description: >
+      Set of tool names that require human approval before execution. Defaults
+      to a built-in list of high-risk tool categories.
+    example: ["export_data", "send_email", "deploy_code"]
+
+rules:
+
+  # =========================================================================
+  # Deny: Explicitly Blocked Tool
+  # =========================================================================
+
+  - name: tool-permission-explicitly-denied
+    description: >
+      The requested tool is on the deployer-configured denied list.
+      No exceptions — action blocked regardless of other configuration.
+    action: deny
+    priority: 100
+
+  - name: tool-permission-not-in-allowlist
+    description: >
+      Allowlist mode is active (allowed set is non-empty) and the requested
+      tool is not in the allowed set. Action blocked.
+    action: deny
+    priority: 90
+
+  # =========================================================================
+  # Escalate: Restricted Tool (Requires Human Approval)
+  # =========================================================================
+
+  - name: tool-permission-restricted
+    description: >
+      The requested tool is on the restricted list — requires human
+      authorisation before execution. Default restricted tools include:
+      delete_record, bulk_delete, drop_table, truncate_table, send_email,
+      send_sms, send_bulk_email, execute_code, shell_exec, file_write,
+      file_delete, deploy, modify_permissions, grant_admin, revoke_access.
+    action: escalate
+    priority: 80

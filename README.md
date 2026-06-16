@@ -4,7 +4,9 @@
 
 **Nigerian & African AI Agent Governance Policies for Microsoft's [Agent Governance Toolkit (AGT)](https://github.com/microsoft/agent-governance-toolkit)**
 
-A community policy pack that extends AGT with compliance coverage for African regulatory frameworks — NDPA 2023, CBN regulations, NFIU/AML rules, POS geo-fencing, BVN/NIN data protection, and POPIA (South Africa).
+A community policy pack that extends AGT with two governance layers:
+- **Universal agent safety controls** — prompt injection, PII leakage, tool permissions, human approval, model routing (apply to any AI agent regardless of jurisdiction)
+- **African regulatory compliance** — NDPA 2023, CBN regulations, NFIU/AML rules, BVN/NIN data protection, Kenya DPA, POPIA (jurisdiction-routed)
 
 Two policy formats:
 - **YAML** (`policies/*.yaml`) — drop-in rules files, validated by the AGT linter, no new infrastructure
@@ -22,6 +24,22 @@ This repo fills that gap.
 
 ## Coverage
 
+### Universal Agent Safety Controls (`agt_policies_agent.*`)
+
+Apply to **every agent action** regardless of customer country or industry. Deployer-configurable via `data.config.*`.
+
+| Policy Pack | Alignment | Key Controls |
+|---|---|---|
+| `agent-prompt-injection.yaml` / `.rego` | OWASP LLM01, NIST AI RMF | Blocks known injection phrases; escalates structural markers (`[INST]`, `<\|system\|>`) |
+| `agent-pii-leakage.yaml` / `.rego` | OWASP LLM06, NDPA s.25, POPIA s.19 | Scans agent OUTPUT for credit cards, BVN/NIN, SA IDs, emails, phone numbers |
+| `agent-tool-permissions.yaml` / `.rego` | OWASP LLM08, NIST AI RMF | Allow/deny/restrict tool calls; blocks excessive agency |
+| `agent-human-approval.yaml` / `.rego` | EU AI Act Art. 14, CBN Maker-Checker | Escalates high-risk actions, high amounts, bulk operations, high risk_level |
+| `agent-model-routing.yaml` / `.rego` | OWASP LLM03/LLM05, NIST AI RMF | Prevents sensitive tasks (PII, AML, KYC) from using unapproved models |
+
+### African Regulatory Compliance
+
+Jurisdiction-routed: policies activate based on `customer_country` in context.
+
 | Policy Pack | Regulation | Key Controls |
 |---|---|---|
 | `ndpa-data-residency.yaml` | Nigeria Data Protection Act 2023 | Cross-border transfer restrictions, sensitive data handling, data minimisation |
@@ -34,14 +52,19 @@ This repo fills that gap.
 
 ### OPA Rego (structured-parameter enforcement)
 
-| Rego Policy | Regulation | Key Advantage over YAML |
+| Rego Policy | Package | Key Advantage over YAML |
 |---|---|---|
-| `policies/rego/cbn-transaction-limits.rego` | CBN NIP/KYC | Checks `input.params.amount` directly — exact numeric enforcement, not text regex |
-| `policies/rego/bvn-nin-protection.rego` | CBN BVN / NIMC NIN | Checks `input.params.identifier_type` and `input.params.bvn_present` in structured params |
-| `policies/rego/ndpa-data-residency.rego` | NDPA 2023 s.25 | Checks `input.params.destination_region` and `input.params.record_count` — unambiguous |
-| `policies/rego/nfiu-aml.rego` | NFIU AML/CFT (MLPPA 2022) | Exact ₦5M CTR threshold on `input.params.amount`, structuring zone (₦4.5M–₦4.99M) |
-| `policies/rego/kdpa-data-protection.rego` | Kenya DPA 2019 s.49 | Cross-border transfers, sensitive data, biometric blocking, ODPC accountability |
-| `policies/rego/popia-south-africa.rego` | POPIA (Act 4 of 2013) | `destination_country` adequacy list (POPIA s.72), SA ID 13-digit format validation |
+| `agent-prompt-injection.rego` | `agt_policies_agent.prompt_injection` | RE2 pattern matching on user-controlled fields; configurable pattern sets |
+| `agent-pii-leakage.rego` | `agt_policies_agent.pii_leakage` | Output scanning: BVN/NIN regex, card number pattern, SA ID 13-digit, email, phone |
+| `agent-tool-permissions.rego` | `agt_policies_agent.tool_permissions` | Allowlist/denylist/restricted-list logic; structured set operations |
+| `agent-human-approval.rego` | `agt_policies_agent.human_approval` | Numeric amount threshold, record count threshold, risk_level from context |
+| `agent-model-routing.rego` | `agt_policies_agent.model_routing` | Approved model set per sensitive task_type; banned model enforcement |
+| `cbn-transaction-limits.rego` | `agt_policies_nigeria.cbn` | Checks `input.params.amount` directly — exact numeric enforcement, not text regex |
+| `bvn-nin-protection.rego` | `agt_policies_nigeria.bvn_nin` | Checks `input.params.identifier_type` and `input.params.bvn_present` in structured params |
+| `ndpa-data-residency.rego` | `agt_policies_nigeria.ndpa` | Checks `input.params.destination_region` and `input.params.record_count` — unambiguous |
+| `nfiu-aml.rego` | `agt_policies_nigeria.nfiu` | Exact ₦5M CTR threshold on `input.params.amount`, structuring zone (₦4.5M–₦4.99M) |
+| `kdpa-data-protection.rego` | `agt_policies_africa.kdpa` | Cross-border transfers, sensitive data, biometric blocking, ODPC accountability |
+| `popia-south-africa.rego` | `agt_policies_africa.popia` | `destination_country` adequacy list (POPIA s.72), SA ID 13-digit format validation |
 
 ---
 
