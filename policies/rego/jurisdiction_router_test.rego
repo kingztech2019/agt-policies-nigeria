@@ -164,8 +164,12 @@ test_us_not_supported if {
 	not router.is_supported_jurisdiction with input as {"context": {"customer_country": "US"}}
 }
 
-test_gh_not_supported if {
-	not router.is_supported_jurisdiction with input as {"context": {"customer_country": "GH"}}
+test_gh_is_supported if {
+	router.is_supported_jurisdiction with input as {"context": {"customer_country": "GH"}}
+}
+
+test_rw_is_supported if {
+	router.is_supported_jurisdiction with input as {"context": {"customer_country": "RW"}}
 }
 
 test_unsupported_country_warning_fires if {

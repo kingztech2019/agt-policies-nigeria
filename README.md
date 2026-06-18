@@ -2,11 +2,15 @@
 
 [![Validate Policies](https://github.com/kingztech2019/agt-policies-nigeria/actions/workflows/validate.yml/badge.svg)](https://github.com/kingztech2019/agt-policies-nigeria/actions/workflows/validate.yml)
 
-**Pan-African AI Agent Governance Policies for Microsoft's [Agent Governance Toolkit (AGT)](https://github.com/microsoft/agent-governance-toolkit)**
+> **Note on scope:** This repository started as a Nigerian fintech governance pack and was cited by Microsoft in [AGT PR #3077](https://github.com/microsoft/agent-governance-toolkit/pull/3077). The scope has since expanded to cover the full African continent — the repo name is preserved to maintain the Microsoft citation and existing integrations. This project is the policy source powering **[comply54](https://comply54.io)**, the Pan-African AI governance compliance layer.
 
-A community policy pack that extends AGT with two governance layers:
+**The canonical Pan-African AI Agent Governance Policy Library — powering [comply54](https://comply54.io)**
+
+Built for Microsoft's [Agent Governance Toolkit (AGT)](https://github.com/microsoft/agent-governance-toolkit). Designed for adoption by AI providers (Anthropic, OpenAI, Google) deploying models across African markets.
+
+A community policy library with two governance layers:
 - **Universal agent safety controls** — prompt injection, PII leakage, tool permissions, human approval, model routing (apply to any AI agent regardless of jurisdiction)
-- **African regulatory compliance** — NDPA 2023, CBN, NFIU/AML, BVN/NIN, Kenya DPA, POPIA, Uganda DPPA, Tanzania PDPA, Ethiopia PDP (jurisdiction-routed)
+- **African regulatory compliance** — NDPA 2023, CBN, NFIU/AML, BVN/NIN, Kenya DPA, POPIA, Uganda DPPA, Tanzania PDPA, Ethiopia PDPP 1321/2024, Ghana DPA, Rwanda Law 058/2021 (jurisdiction-routed, expanding to all 44 African DPA jurisdictions)
 
 Two policy formats:
 - **YAML** (`policies/*.yaml`) — drop-in rules files, validated by the AGT linter, no new infrastructure
@@ -51,7 +55,9 @@ Jurisdiction-routed: policies activate based on `customer_country` in context.
 | `kenya-dpa.yaml` | Kenya Data Protection Act 2019 | Cross-border transfer restrictions, sensitive data, breach notification (72h to ODPC) |
 | `uganda-dppa.yaml` | Uganda Data Protection and Privacy Act 2019 | Cross-border transfers, biometric blocking, NIRA national ID protection, financial data, PDPO breach notification |
 | `tanzania-pdpa.yaml` | Tanzania Personal Data Protection Act 2022 | NIDA national ID (20-digit), special category data, PDPC breach notification, consent enforcement |
-| `ethiopia-pdp.yaml` | Ethiopia Proclamation 958/2016 + draft PDPP | Fayda/MOSIP ID protection, unauthorised access detection, ECA breach notification, cross-border controls |
+| `ethiopia-pdp.yaml` | Ethiopia PDPP 1321/2024 (enacted July 24, 2024) | Fayda/MOSIP ID protection, unauthorised access detection, ECA breach notification (72h), cross-border controls |
+| `ghana-dpa.yaml` | Ghana Data Protection Act 2012 (Act 843) | Ghana Card (GHA-XXXXXXXXX-X) protection, special personal data (s.37), cross-border adequacy (s.38), data minimisation (s.17) |
+| `rwanda-dpa.yaml` | Rwanda Law No. 058/2021 | 48-hour breach notification to NCSA (strictest in Africa), automated decision rights (Art. 21), Rwanda NIDA 16-digit ID protection, special category data |
 
 ### OPA Rego (structured-parameter enforcement)
 
@@ -71,6 +77,8 @@ Jurisdiction-routed: policies activate based on `customer_country` in context.
 | `uganda-dppa.rego` | `agt_policies_africa.uganda_dppa` | NIRA national ID blocking, biometric deny, PDPO breach suppression detection, financial data escalation |
 | `tanzania-pdpa.rego` | `agt_policies_africa.tanzania_pdpa` | NIDA 20-digit ID blocking, PDPC breach suppression detection, consent enforcement, biometric deny |
 | `ethiopia-pdp.rego` | `agt_policies_africa.ethiopia_pdp` | Fayda ID blocking, unauthorised access detection (Proclamation 958/2016), ECA breach suppression, biometric deny |
+| `ghana-dpa.rego` | `agt_policies_africa.ghana_dpa` | Ghana Card national ID regex (NIA Act 707), biometric deny, special personal data (s.37), cross-border adequacy (s.38), DPC accountability |
+| `rwanda-dpa.rego` | `agt_policies_africa.rwanda_dpa` | Rwanda NIDA 16-digit ID blocking, automated decision escalation (Art. 21), 48-hour breach detection, biometric deny, NCSA accountability |
 
 ---
 
@@ -210,6 +218,18 @@ opa eval -d policies/rego/ethiopia-pdp.rego \
   -i examples/inputs/ethiopia-deny-unauthorized.json \
   "data.agt_policies_africa.ethiopia_pdp.decision"
 # → "deny"
+
+# Ghana DPA: block Ghana Card national ID in output
+opa eval -d policies/rego/ghana-dpa.rego \
+  -i examples/inputs/ghana-deny-ghana-card.json \
+  "data.agt_policies_africa.ghana_dpa.decision"
+# → "deny"
+
+# Rwanda DPA: escalate automated credit decision (Art. 21 right to human review)
+opa eval -d policies/rego/rwanda-dpa.rego \
+  -i examples/inputs/rwanda-escalate-auto-credit.json \
+  "data.agt_policies_africa.rwanda_dpa.decision"
+# → "escalate"
 ```
 
 All example input files are in [`examples/inputs/`](examples/inputs/). See [`docs/compliance-mapping.md`](docs/compliance-mapping.md) for the full mapping of regulatory obligations → Rego rules → expected decisions.
@@ -304,7 +324,9 @@ opa eval -d policies/rego/jurisdiction-router.rego \
 | `ZA` | POPIA |
 | `UG` | Uganda DPPA 2019 |
 | `TZ` | Tanzania PDPA 2022 |
-| `ET` | Ethiopia PDP (Proclamation 958/2016 + draft PDPP) |
+| `ET` | Ethiopia PDPP 1321/2024 |
+| `GH` | Ghana DPA 2012 (Act 843) |
+| `RW` | Rwanda Law 058/2021 |
 | `NG` + `transaction_countries: [NG, ZA]` | All 5 — NDPA and POPIA both enforced |
 | Unknown country | Advisory warning returned; action audited |
 
@@ -401,15 +423,14 @@ Every decision is written to a timestamped audit log satisfying NDPA s.30 accoun
 - [x] POPIA Rego policy — SA ID validation, adequacy list, biometric blocks (`popia-south-africa.rego`)
 - [x] Uganda Data Protection and Privacy Act 2019 — NIRA ID, biometric blocking, PDPO breach notification (`uganda-dppa.yaml` + `.rego`)
 - [x] Tanzania Personal Data Protection Act 2022 — NIDA ID, PDPC breach notification, consent enforcement (`tanzania-pdpa.yaml` + `.rego`)
-- [x] Ethiopia PDP — Fayda ID, unauthorised access detection, ECA breach notification (`ethiopia-pdp.yaml` + `.rego`)
+- [x] Ethiopia PDPP 1321/2024 — Fayda ID, unauthorised access detection, ECA breach notification (`ethiopia-pdp.yaml` + `.rego`)
+- [x] Ghana Data Protection Act 2012 — Ghana Card (GHA-XXXXXXXXX-X), special personal data, cross-border adequacy (`ghana-dpa.yaml` + `.rego`)
+- [x] Rwanda Law 058/2021 — 48h breach notification, automated decision rights (Art. 21), NIDA 16-digit ID (`rwanda-dpa.yaml` + `.rego`)
 - [x] Semantic versioning — `CHANGELOG.md` + `REGULATORY-CHANGES.md`
-- [ ] Ghana Data Protection Act 2012 policy pack
-- [ ] Rwanda Data Protection Law policy pack
 - [ ] ECOWAS cross-border transfer rules
 - [ ] SIM swap fraud detection patterns
 - [ ] NAICOM insurtech AI governance rules
 - [ ] SEC Nigeria capital markets AI rules
-- [ ] Ghana Data Protection Act 2012 policy pack
 - [x] Jurisdiction router — `customer_country` + `transaction_countries` → applicable policy packs
 - [ ] OPA bundle packaging (`bundle.tar.gz`) for direct `opa run` deployment
 - [ ] JSON Schema for agent input (`schemas/agent-input.json`)

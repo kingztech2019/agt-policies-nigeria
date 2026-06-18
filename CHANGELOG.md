@@ -7,6 +7,28 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.4.0] — 2026-06-18
+
+West Africa expansion — Ghana and Rwanda policy packs.
+
+### Added
+
+- **Ghana DPA 2012** (`ghana-dpa.yaml` + `rego/ghana-dpa.rego`) — Ghana Data Protection Act 2012 (Act 843). Covers: Ghana Card national ID (GHA-XXXXXXXXX-X format, NIA Act 707) blocking, biometric deny, DPC breach-suppression detection, special personal data escalation (s.37 — health, ethnic origin, religion, political opinion, trade union, sexual life, criminal), cross-border transfer adequacy controls (s.38), data minimisation (s.17), data subject participation (s.33). Permitted regions: `af-south-1`, `af-west-1`, `ghana`, `GH`. 30 tests.
+- **Rwanda Law 058/2021** (`rwanda-dpa.yaml` + `rego/rwanda-dpa.rego`) — Rwanda Law No. 058/2021 Relating to the Protection of Personal Data and Privacy. Covers: 48-hour breach notification to NCSA (Art. 43 — strictest in Africa), automated individual decision-making escalation with right to human review (Art. 21 — critical for AI agents), Rwanda National ID (NIDA 16-digit format) blocking, biometric deny, special category data (Art. 3(2)/10 — race, health, criminal, genetic, sexual life, family details), cross-border transfer restrictions (Art. 48-50). Criminal penalties up to 10 years + 25M RWF. Permitted regions: `af-south-1`, `af-east-1`, `rwanda`, `RW`. 32 tests.
+- **Jurisdiction router updated** — `GH` and `RW` added to `jurisdiction_policies`. Router tests updated: `test_gh_not_supported` removed; `test_gh_is_supported` and `test_rw_is_supported` added.
+- **README updated** — African Regulatory Compliance table, OPA Rego table, Jurisdiction Router table, Quick Start examples, and Roadmap all updated for Ghana and Rwanda packs.
+
+### Fixed
+
+- Ethiopia CHANGELOG entry corrected: "draft PDPP" → "Ethiopia PDPP 1321/2024 (enacted July 24, 2024)". The dedicated Personal Data Protection Proclamation was enacted and published in the Federal Negarit Gazette; the pack and comply54 registry have been updated accordingly.
+
+### Changed
+
+- Total OPA tests: 384 → 447 (63 new tests — 30 Ghana + 32 Rwanda + 1 new router test)
+- Jurisdiction count: 6 → 8 (added GH, RW)
+
+---
+
 ## [1.3.0] — 2026-06-18
 
 East Africa policy expansion — Uganda, Tanzania, and Ethiopia regulatory packs.
