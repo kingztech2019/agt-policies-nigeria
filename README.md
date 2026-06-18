@@ -2,11 +2,11 @@
 
 [![Validate Policies](https://github.com/kingztech2019/agt-policies-nigeria/actions/workflows/validate.yml/badge.svg)](https://github.com/kingztech2019/agt-policies-nigeria/actions/workflows/validate.yml)
 
-**Nigerian & African AI Agent Governance Policies for Microsoft's [Agent Governance Toolkit (AGT)](https://github.com/microsoft/agent-governance-toolkit)**
+**Pan-African AI Agent Governance Policies for Microsoft's [Agent Governance Toolkit (AGT)](https://github.com/microsoft/agent-governance-toolkit)**
 
 A community policy pack that extends AGT with two governance layers:
 - **Universal agent safety controls** — prompt injection, PII leakage, tool permissions, human approval, model routing (apply to any AI agent regardless of jurisdiction)
-- **African regulatory compliance** — NDPA 2023, CBN regulations, NFIU/AML rules, BVN/NIN data protection, Kenya DPA, POPIA (jurisdiction-routed)
+- **African regulatory compliance** — NDPA 2023, CBN, NFIU/AML, BVN/NIN, Kenya DPA, POPIA, Uganda DPPA, Tanzania PDPA, Ethiopia PDP (jurisdiction-routed)
 
 Two policy formats:
 - **YAML** (`policies/*.yaml`) — drop-in rules files, validated by the AGT linter, no new infrastructure
@@ -49,6 +49,9 @@ Jurisdiction-routed: policies activate based on `customer_country` in context.
 | `nfiu-aml-str.yaml` | NFIU AML/CFT Regulations | STR/CTR triggers, structuring detection, velocity controls |
 | `popia-south-africa.yaml` | POPIA (South Africa) | Cross-border transfer controls, special personal information, SA ID masking |
 | `kenya-dpa.yaml` | Kenya Data Protection Act 2019 | Cross-border transfer restrictions, sensitive data, breach notification (72h to ODPC) |
+| `uganda-dppa.yaml` | Uganda Data Protection and Privacy Act 2019 | Cross-border transfers, biometric blocking, NIRA national ID protection, financial data, PDPO breach notification |
+| `tanzania-pdpa.yaml` | Tanzania Personal Data Protection Act 2022 | NIDA national ID (20-digit), special category data, PDPC breach notification, consent enforcement |
+| `ethiopia-pdp.yaml` | Ethiopia Proclamation 958/2016 + draft PDPP | Fayda/MOSIP ID protection, unauthorised access detection, ECA breach notification, cross-border controls |
 
 ### OPA Rego (structured-parameter enforcement)
 
@@ -65,6 +68,9 @@ Jurisdiction-routed: policies activate based on `customer_country` in context.
 | `nfiu-aml.rego` | `agt_policies_nigeria.nfiu` | Exact ₦5M CTR threshold on `input.params.amount`, structuring zone (₦4.5M–₦4.99M) |
 | `kdpa-data-protection.rego` | `agt_policies_africa.kdpa` | Cross-border transfers, sensitive data, biometric blocking, ODPC accountability |
 | `popia-south-africa.rego` | `agt_policies_africa.popia` | `destination_country` adequacy list (POPIA s.72), SA ID 13-digit format validation |
+| `uganda-dppa.rego` | `agt_policies_africa.uganda_dppa` | NIRA national ID blocking, biometric deny, PDPO breach suppression detection, financial data escalation |
+| `tanzania-pdpa.rego` | `agt_policies_africa.tanzania_pdpa` | NIDA 20-digit ID blocking, PDPC breach suppression detection, consent enforcement, biometric deny |
+| `ethiopia-pdp.rego` | `agt_policies_africa.ethiopia_pdp` | Fayda ID blocking, unauthorised access detection (Proclamation 958/2016), ECA breach suppression, biometric deny |
 
 ---
 
@@ -162,7 +168,6 @@ opa eval -d policies/rego/ndpa-data-residency.rego \
   -i examples/inputs/ndpa-allow-permitted.json \
   "data.agt_policies_nigeria.ndpa.decision"
 # → "allow"
-```
 
 # NFIU: block a ₦6M transfer (at CTR threshold — routes to human review)
 opa eval -d policies/rego/nfiu-aml.rego \
@@ -186,6 +191,24 @@ opa eval -d policies/rego/popia-south-africa.rego \
 opa eval -d policies/rego/popia-south-africa.rego \
   -i examples/inputs/popia-deny-biometric.json \
   "data.agt_policies_africa.popia.decision"
+# → "deny"
+
+# Uganda DPPA: block NIRA national ID in output
+opa eval -d policies/rego/uganda-dppa.rego \
+  -i examples/inputs/uganda-deny-nira-id.json \
+  "data.agt_policies_africa.uganda_dppa.decision"
+# → "deny"
+
+# Tanzania PDPA: block NIDA number in output
+opa eval -d policies/rego/tanzania-pdpa.rego \
+  -i examples/inputs/tanzania-deny-nida-id.json \
+  "data.agt_policies_africa.tanzania_pdpa.decision"
+# → "deny"
+
+# Ethiopia PDP: detect unauthorised access attempt
+opa eval -d policies/rego/ethiopia-pdp.rego \
+  -i examples/inputs/ethiopia-deny-unauthorized.json \
+  "data.agt_policies_africa.ethiopia_pdp.decision"
 # → "deny"
 ```
 
@@ -279,6 +302,9 @@ opa eval -d policies/rego/jurisdiction-router.rego \
 | `NG` | CBN, BVN/NIN, NDPA 2023, NFIU AML |
 | `KE` | Kenya DPA 2019 |
 | `ZA` | POPIA |
+| `UG` | Uganda DPPA 2019 |
+| `TZ` | Tanzania PDPA 2022 |
+| `ET` | Ethiopia PDP (Proclamation 958/2016 + draft PDPP) |
 | `NG` + `transaction_countries: [NG, ZA]` | All 5 — NDPA and POPIA both enforced |
 | Unknown country | Advisory warning returned; action audited |
 
@@ -373,7 +399,12 @@ Every decision is written to a timestamped audit log satisfying NDPA s.30 accoun
 - [x] Kenya Data Protection Act 2019 policy pack (YAML + Rego)
 - [x] NFIU AML/CFT Rego policy — exact CTR threshold enforcement (`nfiu-aml.rego`)
 - [x] POPIA Rego policy — SA ID validation, adequacy list, biometric blocks (`popia-south-africa.rego`)
+- [x] Uganda Data Protection and Privacy Act 2019 — NIRA ID, biometric blocking, PDPO breach notification (`uganda-dppa.yaml` + `.rego`)
+- [x] Tanzania Personal Data Protection Act 2022 — NIDA ID, PDPC breach notification, consent enforcement (`tanzania-pdpa.yaml` + `.rego`)
+- [x] Ethiopia PDP — Fayda ID, unauthorised access detection, ECA breach notification (`ethiopia-pdp.yaml` + `.rego`)
 - [x] Semantic versioning — `CHANGELOG.md` + `REGULATORY-CHANGES.md`
+- [ ] Ghana Data Protection Act 2012 policy pack
+- [ ] Rwanda Data Protection Law policy pack
 - [ ] ECOWAS cross-border transfer rules
 - [ ] SIM swap fraud detection patterns
 - [ ] NAICOM insurtech AI governance rules

@@ -7,6 +7,25 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.3.0] — 2026-06-18
+
+East Africa policy expansion — Uganda, Tanzania, and Ethiopia regulatory packs.
+
+### Added
+
+- **Uganda DPPA 2019** (`uganda-dppa.yaml` + `rego/uganda-dppa.rego`) — Uganda Data Protection and Privacy Act 2019. Covers: NIRA national ID (CM + 12-char) blocking, biometric deny, PDPO breach-suppression detection, financial data escalation, special category (health, ethnic origin, religion) escalation, cross-border transfer controls (s.13, s.19, s.22). Permitted regions: `af-south-1`, `af-east-1`, `uganda`, `UG`. 28 tests.
+- **Tanzania PDPA 2022** (`tanzania-pdpa.yaml` + `rego/tanzania-pdpa.rego`) — Tanzania Personal Data Protection Act 2022. Covers: NIDA national ID (20-digit format) blocking, biometric deny, PDPC breach-suppression detection, consent-enforcement deny, special category escalation, cross-border transfer controls (s.8, s.13, s.17, s.25). Permitted regions: `af-south-1`, `af-east-1`, `tanzania`, `TZ`. 28 tests.
+- **Ethiopia PDP** (`ethiopia-pdp.yaml` + `rego/ethiopia-pdp.rego`) — Ethiopia Computer Crime Proclamation No. 958/2016 + draft Personal Data Protection Proclamation. Covers: Fayda/MOSIP ID blocking, biometric deny, unauthorised-access detection (Proclamation 958/2016), ECA breach-suppression detection, special category escalation, cross-border transfer controls. Permitted regions: `af-south-1`, `af-east-1`, `ethiopia`, `ET`. Pack tagged `draft` — update when dedicated PDPP is enacted. 28 tests.
+- **Jurisdiction router updated** — `UG`, `TZ`, `ET` added to `jurisdiction_policies`. NG routes 9 packs; KE, ZA, UG, TZ, ET each route 6 (5 universal + 1 regulatory).
+- **README updated** — Coverage table, OPA Rego table, Jurisdiction Router table, Quick Start examples, and Roadmap all updated for the three new packs.
+
+### Changed
+
+- Total OPA tests: 306 → 384 (78 new tests across the three packs)
+- Jurisdiction count: 3 → 6 (NG, KE, ZA → NG, KE, ZA, UG, TZ, ET)
+
+---
+
 ## [1.2.0] — 2026-06-16
 
 Universal agent safety controls — 5 new policy packs applicable to any AI agent.

@@ -12,6 +12,9 @@ When a regulation updates, open a PR that:
 
 | Date | Regulation | Change | Affected files | Status |
 |------|-----------|--------|---------------|--------|
+| 2026-06-18 | Uganda DPPA 2019 | Initial implementation: s.4 lawful basis, s.13 cross-border, s.19 sensitive data, s.22 security, s.25 breach notification. NIRA ID blocking, biometric deny, PDPO breach suppression, financial data escalation. | `policies/rego/uganda-dppa.rego`, `policies/uganda-dppa.yaml` | ✅ Current |
+| 2026-06-18 | Tanzania PDPA 2022 | Initial implementation: s.8 lawful basis, s.13 sensitive data, s.17 security, s.25 cross-border, s.28 breach notification. NIDA 20-digit ID blocking, biometric deny, PDPC breach suppression, consent enforcement. | `policies/rego/tanzania-pdpa.rego`, `policies/tanzania-pdpa.yaml` | ✅ Current |
+| 2026-06-18 | Ethiopia Proclamation 958/2016 + draft PDPP | Initial implementation: Computer Crime Proclamation 958/2016 (unauthorised access), Electronic Transactions Proclamation 1205/2020, draft PDPP. Fayda/MOSIP ID blocking, unauthorised access detection, ECA breach suppression, cross-border controls. Pack tagged draft — update on enactment. | `policies/rego/ethiopia-pdp.rego`, `policies/ethiopia-pdp.yaml` | ⚠️ Draft — monitor for PDPP enactment |
 | 2026-06-15 | NFIU AML/CFT (MLPPA 2022) | Initial Rego implementation: CTR ₦5M, NIP cap ₦10M, structuring zone, PEP, KYC bypass | `policies/rego/nfiu-aml.rego`, `policies/nfiu-aml-str.yaml` | ✅ Current |
 | 2026-06-15 | POPIA (Act 4 of 2013) | Initial Rego implementation: s.72 adequacy list, SA ID, biometric, children's data | `policies/rego/popia-south-africa.rego`, `policies/popia-south-africa.yaml` | ✅ Current |
 | 2026-06-14 | CBN NIP Framework | Initial implementation: ₦10M single-transaction cap, tiered KYC thresholds, SOD | `policies/rego/cbn-transaction-limits.rego`, `policies/cbn-transaction-limits.yaml` | ✅ Current |
@@ -32,6 +35,9 @@ When a regulation updates, open a PR that:
 | FATF | NFIU / CBN | Nigeria mutual evaluation follow-ups | Biennial |
 | Kenya DPA 2019 | ODPC | ODPC data protection regulations and guidelines | Ongoing |
 | POPIA | Information Regulator SA | Information Regulator guidance notes | Ongoing |
+| Uganda DPPA 2019 | PDPO / NITA-U | Commencement regulations, PDPO enforcement guidelines, adequacy list updates | Ongoing |
+| Tanzania PDPA 2022 | PDPC | PDPC subsidiary regulations, enforcement guidance, adequacy determinations | Ongoing |
+| Ethiopia PDPP (draft) | ECA / MInT | Enactment and gazetting of dedicated Personal Data Protection Proclamation | Critical — review quarterly |
 
 ---
 
