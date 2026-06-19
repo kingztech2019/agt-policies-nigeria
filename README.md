@@ -58,6 +58,7 @@ Jurisdiction-routed: policies activate based on `customer_country` in context.
 | `ethiopia-pdp.yaml` | Ethiopia PDPP 1321/2024 (enacted July 24, 2024) | Fayda/MOSIP ID protection, unauthorised access detection, ECA breach notification (72h), cross-border controls |
 | `ghana-dpa.yaml` | Ghana Data Protection Act 2012 (Act 843) | Ghana Card (GHA-XXXXXXXXX-X) protection, special personal data (s.37), cross-border adequacy (s.38), data minimisation (s.17) |
 | `rwanda-dpa.yaml` | Rwanda Law No. 058/2021 | 48-hour breach notification to NCSA (strictest in Africa), automated decision rights (Art. 21), Rwanda NIDA 16-digit ID protection, special category data |
+| `egypt-pdpl.yaml` | Egypt Personal Data Protection Law No. 151/2020 | Financial data as sensitive category (unique in Africa), children's data as sensitive, 72h breach notification to PDPC, cross-border adequacy controls (Arts. 14-15), Egypt National ID (14-digit) protection, mandatory DPO (Art. 8) |
 
 ### OPA Rego (structured-parameter enforcement)
 
@@ -79,6 +80,7 @@ Jurisdiction-routed: policies activate based on `customer_country` in context.
 | `ethiopia-pdp.rego` | `agt_policies_africa.ethiopia_pdp` | Fayda ID blocking, unauthorised access detection (Proclamation 958/2016), ECA breach suppression, biometric deny |
 | `ghana-dpa.rego` | `agt_policies_africa.ghana_dpa` | Ghana Card national ID regex (NIA Act 707), biometric deny, special personal data (s.37), cross-border adequacy (s.38), DPC accountability |
 | `rwanda-dpa.rego` | `agt_policies_africa.rwanda_dpa` | Rwanda NIDA 16-digit ID blocking, automated decision escalation (Art. 21), 48-hour breach detection, biometric deny, NCSA accountability |
+| `egypt-pdpl.rego` | `agt_policies_africa.egypt_pdpl` | Egypt National ID (14-digit) blocking, financial data escalation (unique sensitive category), children's data escalation, biometric deny, unlicensed-processing deny, PDPC accountability |
 
 ---
 
@@ -230,6 +232,18 @@ opa eval -d policies/rego/rwanda-dpa.rego \
   -i examples/inputs/rwanda-escalate-auto-credit.json \
   "data.agt_policies_africa.rwanda_dpa.decision"
 # → "escalate"
+
+# Egypt PDPL: escalate financial data exposure (unique sensitive category)
+opa eval -d policies/rego/egypt-pdpl.rego \
+  -i examples/inputs/egypt-escalate-financial-data.json \
+  "data.agt_policies_africa.egypt_pdpl.decision"
+# → "escalate"
+
+# Egypt PDPL: block Egypt National ID (14-digit) in output
+opa eval -d policies/rego/egypt-pdpl.rego \
+  -i examples/inputs/egypt-deny-national-id.json \
+  "data.agt_policies_africa.egypt_pdpl.decision"
+# → "deny"
 ```
 
 All example input files are in [`examples/inputs/`](examples/inputs/). See [`docs/compliance-mapping.md`](docs/compliance-mapping.md) for the full mapping of regulatory obligations → Rego rules → expected decisions.
@@ -327,6 +341,7 @@ opa eval -d policies/rego/jurisdiction-router.rego \
 | `ET` | Ethiopia PDPP 1321/2024 |
 | `GH` | Ghana DPA 2012 (Act 843) |
 | `RW` | Rwanda Law 058/2021 |
+| `EG` | Egypt PDPL No. 151/2020 |
 | `NG` + `transaction_countries: [NG, ZA]` | All 5 — NDPA and POPIA both enforced |
 | Unknown country | Advisory warning returned; action audited |
 
@@ -426,6 +441,7 @@ Every decision is written to a timestamped audit log satisfying NDPA s.30 accoun
 - [x] Ethiopia PDPP 1321/2024 — Fayda ID, unauthorised access detection, ECA breach notification (`ethiopia-pdp.yaml` + `.rego`)
 - [x] Ghana Data Protection Act 2012 — Ghana Card (GHA-XXXXXXXXX-X), special personal data, cross-border adequacy (`ghana-dpa.yaml` + `.rego`)
 - [x] Rwanda Law 058/2021 — 48h breach notification, automated decision rights (Art. 21), NIDA 16-digit ID (`rwanda-dpa.yaml` + `.rego`)
+- [x] Egypt PDPL No. 151/2020 — financial data as sensitive, children's data as sensitive, 72h breach to PDPC, Egypt National ID 14-digit (`egypt-pdpl.yaml` + `.rego`)
 - [x] Semantic versioning — `CHANGELOG.md` + `REGULATORY-CHANGES.md`
 - [ ] ECOWAS cross-border transfer rules
 - [ ] SIM swap fraud detection patterns

@@ -52,6 +52,7 @@ jurisdiction_policies := {
 	"ET": {"ethiopia_pdp"},
 	"GH": {"ghana_dpa"},
 	"RW": {"rwanda_dpa"},
+	"EG": {"egypt_pdpl"},
 }
 
 # ── Policy pack → OPA query path ─────────────────────────────────
@@ -68,6 +69,7 @@ policy_queries := {
 	"ethiopia_pdp": "data.agt_policies_africa.ethiopia_pdp.decision",
 	"ghana_dpa": "data.agt_policies_africa.ghana_dpa.decision",
 	"rwanda_dpa": "data.agt_policies_africa.rwanda_dpa.decision",
+	"egypt_pdpl": "data.agt_policies_africa.egypt_pdpl.decision",
 	"prompt_injection": "data.agt_policies_agent.prompt_injection.decision",
 	"pii_leakage": "data.agt_policies_agent.pii_leakage.decision",
 	"tool_permissions": "data.agt_policies_agent.tool_permissions.decision",

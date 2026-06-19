@@ -7,6 +7,23 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.5.0] — 2026-06-19
+
+North Africa expansion — Egypt policy pack.
+
+### Added
+
+- **Egypt PDPL No. 151/2020** (`egypt-pdpl.yaml` + `rego/egypt-pdpl.rego`) — Egypt Personal Data Protection Law No. 151 of 2020 (Official Gazette No. 29 bis, 15 July 2020). Covers: financial data as sensitive category (Art. 1 — **unique in Africa**: credit scores, account balances, loan history are classified alongside health/biometric data), children's data as sensitive category (Art. 1/3 — also unique in Africa), biometric deny, Egypt National ID (14-digit format: [2|3][YYMMDD][Gov][Seq][Check]) blocking, DPO mandatory escalation (Art. 8), unlicensed-processing deny (Art. 26 — up to EGP 2M), 72-hour breach notification to PDPC (Art. 7 — plus 3-day data subject notification), cross-border transfer restrictions (Arts. 14-15, PDPC adequacy list pending), bulk export controls. Permitted regions: af-south-1, me-south-1, me-central-1, egypt, EG. 39 tests.
+- **Jurisdiction router updated** — `EG` added to `jurisdiction_policies` and `policy_queries`.
+- **README updated** — African Regulatory Compliance table, OPA Rego table, Jurisdiction Router table, Quick Start examples, and Roadmap updated for Egypt.
+
+### Changed
+
+- Total OPA tests: 447 → 486 (39 new Egypt tests)
+- Jurisdiction count: 8 → 9 (added EG)
+
+---
+
 ## [1.4.0] — 2026-06-18
 
 West Africa expansion — Ghana and Rwanda policy packs.
