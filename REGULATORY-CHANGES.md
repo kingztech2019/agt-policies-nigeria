@@ -12,6 +12,7 @@ When a regulation updates, open a PR that:
 
 | Date | Regulation | Change | Affected files | Status |
 |------|-----------|--------|---------------|--------|
+| 2026-06-19 | Mauritius DPA 2017 (Act No. 20/2017) | Initial implementation: most GDPR-aligned African DPA; DPO mandatory for ALL controllers (no size threshold — stricter than GDPR), mandatory Commissioner registration (MUR 200,000/5yr penalty), 72h breach notification, six processing principles, cross-border safeguards requirement, automated decision-making transparency, Mauritius NIC ([A-Z][0-9]{6,7}) blocking, special categories (racial/ethnic, political, religious, trade union, health/mental, sexual orientation, genetic/biometric, criminal proceedings). Unique: DPO mandatory universally, no size threshold. | `policies/rego/mauritius-dpa.rego`, `policies/mauritius-dpa.yaml` | ✅ Current |
 | 2026-06-19 | Egypt PDPL No. 151/2020 | Initial implementation: Art. 1 sensitive data (financial + children's = unique in Africa), Art. 2 data subject rights, Art. 3 children's data conditions, Art. 4 sensitive processing restrictions, Art. 6 lawful basis, Art. 7 breach notification (72h PDPC + 3-day subjects), Art. 8 DPO mandatory, Arts. 14-15 cross-border restrictions, Art. 19 PDPC, Art. 26 licensing. Egypt National ID (14-digit) blocking, financial data escalation, biometric deny. | `policies/rego/egypt-pdpl.rego`, `policies/egypt-pdpl.yaml` | ✅ Current |
 | 2026-06-18 | Ghana DPA 2012 (Act 843) | Initial implementation: s.17 data minimisation, s.33 data subject participation, s.37 special personal data, s.38 cross-border adequacy, s.40 security. Ghana Card (GHA-XXXXXXXXX-X, NIA Act 707) blocking, biometric deny, DPC breach suppression, special category escalation. Monitor: Ghana Data Protection Bill 2025 pending. | `policies/rego/ghana-dpa.rego`, `policies/ghana-dpa.yaml` | ✅ Current |
 | 2026-06-18 | Rwanda Law 058/2021 | Initial implementation: Art. 3(2)/10 sensitive data, Art. 21 automated decisions, Art. 43 48h breach notification to NCSA (strictest in Africa), Art. 44/45 breach reporting/communication, Art. 48-50 cross-border transfer restrictions. Rwanda NIDA 16-digit ID blocking, biometric deny, automated decision escalation for AI agents. | `policies/rego/rwanda-dpa.rego`, `policies/rwanda-dpa.yaml` | ✅ Current |
@@ -45,6 +46,7 @@ When a regulation updates, open a PR that:
 | Egypt PDPL No. 151/2020 | PDPC / MCIT | PDPC adequacy list (not yet published), Executive Regulations updates, sector-specific guidelines | Ongoing |
 | Ghana DPA 2012 (Act 843) | DPC | Ghana Data Protection Bill 2025 — when enacted, cross-border and breach rules may change significantly | Monitor — pending |
 | Rwanda Law 058/2021 | NCSA | NCSA enforcement regulations, adequacy determinations, implementing guidelines | Ongoing |
+| Mauritius DPA 2017 (Act 20/2017) | Data Protection Commissioner | Commissioner adequacy determinations (transfers), guidance on compelling legitimate interests, DPO implementation guidance | Ongoing |
 
 ---
 

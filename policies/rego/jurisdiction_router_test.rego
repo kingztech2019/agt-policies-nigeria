@@ -172,6 +172,10 @@ test_rw_is_supported if {
 	router.is_supported_jurisdiction with input as {"context": {"customer_country": "RW"}}
 }
 
+test_mu_is_supported if {
+	router.is_supported_jurisdiction with input as {"context": {"customer_country": "MU"}}
+}
+
 test_unsupported_country_warning_fires if {
 	router.unsupported_jurisdiction_warning with input as {"context": {"customer_country": "US"}}
 }

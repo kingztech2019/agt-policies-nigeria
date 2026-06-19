@@ -7,6 +7,23 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.6.0] — 2026-06-19
+
+Indian Ocean expansion — Mauritius policy pack.
+
+### Added
+
+- **Mauritius DPA 2017** (`mauritius-dpa.yaml` + `rego/mauritius-dpa.rego`) — Data Protection Act 2017 (Act No. 20 of 2017), effective January 15, 2018, enforced by the Data Protection Commissioner (dataprotection.govmu.org). The most GDPR-aligned data protection law in Africa — directly modeled on EU GDPR 2016/679. Key provisions: DPO mandatory for ALL controllers/processors (no size threshold — stricter than GDPR), mandatory Commissioner registration with 3-year renewal (penalty: MUR 200,000 or 5 years imprisonment), six GDPR-aligned processing principles, 72-hour breach notification to Commissioner plus data subject notification without undue delay for high risk, cross-border transfers require proof of appropriate safeguards filed with Commissioner (derogations: consent, contract, public interest, legal claims, vital interests), automated decision-making transparency obligation (data subjects must be informed of logic/significance/consequences), special categories (racial/ethnic, political, religious, trade union, health/mental, sexual orientation, genetic/biometric, criminal proceedings). Mauritius National ID Card (NIC format: [A-Z][0-9]{6,7}, e.g. A123456) blocking. Electronic marketing: data subjects may object at any time. 39 tests.
+- **Jurisdiction router updated** — `MU` added to `jurisdiction_policies` and `policy_queries`; `test_mu_is_supported` added to router tests.
+- **README updated** — African Regulatory Compliance table, OPA Rego table, Jurisdiction Router table, Quick Start examples, and Roadmap updated for Mauritius.
+
+### Changed
+
+- Total OPA tests: 486 → 526 (39 new Mauritius tests + 1 new router test)
+- Jurisdiction count: 9 → 10 (added MU)
+
+---
+
 ## [1.5.0] — 2026-06-19
 
 North Africa expansion — Egypt policy pack.

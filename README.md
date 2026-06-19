@@ -10,7 +10,7 @@ Built for Microsoft's [Agent Governance Toolkit (AGT)](https://github.com/micros
 
 A community policy library with two governance layers:
 - **Universal agent safety controls** — prompt injection, PII leakage, tool permissions, human approval, model routing (apply to any AI agent regardless of jurisdiction)
-- **African regulatory compliance** — NDPA 2023, CBN, NFIU/AML, BVN/NIN, Kenya DPA, POPIA, Uganda DPPA, Tanzania PDPA, Ethiopia PDPP 1321/2024, Ghana DPA, Rwanda Law 058/2021 (jurisdiction-routed, expanding to all 44 African DPA jurisdictions)
+- **African regulatory compliance** — NDPA 2023, CBN, NFIU/AML, BVN/NIN, Kenya DPA, POPIA, Uganda DPPA, Tanzania PDPA, Ethiopia PDPP 1321/2024, Ghana DPA, Rwanda Law 058/2021, Egypt PDPL No. 151/2020, Mauritius DPA 2017 (jurisdiction-routed, expanding to all 44 African DPA jurisdictions)
 
 Two policy formats:
 - **YAML** (`policies/*.yaml`) — drop-in rules files, validated by the AGT linter, no new infrastructure
@@ -59,6 +59,7 @@ Jurisdiction-routed: policies activate based on `customer_country` in context.
 | `ghana-dpa.yaml` | Ghana Data Protection Act 2012 (Act 843) | Ghana Card (GHA-XXXXXXXXX-X) protection, special personal data (s.37), cross-border adequacy (s.38), data minimisation (s.17) |
 | `rwanda-dpa.yaml` | Rwanda Law No. 058/2021 | 48-hour breach notification to NCSA (strictest in Africa), automated decision rights (Art. 21), Rwanda NIDA 16-digit ID protection, special category data |
 | `egypt-pdpl.yaml` | Egypt Personal Data Protection Law No. 151/2020 | Financial data as sensitive category (unique in Africa), children's data as sensitive, 72h breach notification to PDPC, cross-border adequacy controls (Arts. 14-15), Egypt National ID (14-digit) protection, mandatory DPO (Art. 8) |
+| `mauritius-dpa.yaml` | Mauritius Data Protection Act 2017 (Act No. 20 of 2017) | Most GDPR-aligned DPA in Africa; mandatory DPO for ALL controllers (no size threshold — stricter than GDPR), mandatory Commissioner registration (MUR 200K/5yr), 72h breach notification, automated decision-making transparency, Mauritius NIC protection, 10 jurisdictions |
 
 ### OPA Rego (structured-parameter enforcement)
 
@@ -81,6 +82,7 @@ Jurisdiction-routed: policies activate based on `customer_country` in context.
 | `ghana-dpa.rego` | `agt_policies_africa.ghana_dpa` | Ghana Card national ID regex (NIA Act 707), biometric deny, special personal data (s.37), cross-border adequacy (s.38), DPC accountability |
 | `rwanda-dpa.rego` | `agt_policies_africa.rwanda_dpa` | Rwanda NIDA 16-digit ID blocking, automated decision escalation (Art. 21), 48-hour breach detection, biometric deny, NCSA accountability |
 | `egypt-pdpl.rego` | `agt_policies_africa.egypt_pdpl` | Egypt National ID (14-digit) blocking, financial data escalation (unique sensitive category), children's data escalation, biometric deny, unlicensed-processing deny, PDPC accountability |
+| `mauritius-dpa.rego` | `agt_policies_africa.mauritius_dpa` | Mauritius NIC blocking ([A-Z][0-9]{6,7}), biometric deny, mandatory DPO escalation (all controllers, no size threshold), mandatory registration deny, automated decision-making escalation (transparency), 72h breach detection, Commissioner accountability |
 
 ---
 
@@ -244,6 +246,18 @@ opa eval -d policies/rego/egypt-pdpl.rego \
   -i examples/inputs/egypt-deny-national-id.json \
   "data.agt_policies_africa.egypt_pdpl.decision"
 # → "deny"
+
+# Mauritius DPA: escalate automated credit decision (transparency obligation)
+opa eval -d policies/rego/mauritius-dpa.rego \
+  -i examples/inputs/mauritius-escalate-auto-credit.json \
+  "data.agt_policies_africa.mauritius_dpa.decision"
+# → "escalate"
+
+# Mauritius DPA: block Mauritius NIC in agent output
+opa eval -d policies/rego/mauritius-dpa.rego \
+  -i examples/inputs/mauritius-deny-nic.json \
+  "data.agt_policies_africa.mauritius_dpa.decision"
+# → "deny"
 ```
 
 All example input files are in [`examples/inputs/`](examples/inputs/). See [`docs/compliance-mapping.md`](docs/compliance-mapping.md) for the full mapping of regulatory obligations → Rego rules → expected decisions.
@@ -342,6 +356,7 @@ opa eval -d policies/rego/jurisdiction-router.rego \
 | `GH` | Ghana DPA 2012 (Act 843) |
 | `RW` | Rwanda Law 058/2021 |
 | `EG` | Egypt PDPL No. 151/2020 |
+| `MU` | Mauritius DPA 2017 |
 | `NG` + `transaction_countries: [NG, ZA]` | All 5 — NDPA and POPIA both enforced |
 | Unknown country | Advisory warning returned; action audited |
 
@@ -442,6 +457,7 @@ Every decision is written to a timestamped audit log satisfying NDPA s.30 accoun
 - [x] Ghana Data Protection Act 2012 — Ghana Card (GHA-XXXXXXXXX-X), special personal data, cross-border adequacy (`ghana-dpa.yaml` + `.rego`)
 - [x] Rwanda Law 058/2021 — 48h breach notification, automated decision rights (Art. 21), NIDA 16-digit ID (`rwanda-dpa.yaml` + `.rego`)
 - [x] Egypt PDPL No. 151/2020 — financial data as sensitive, children's data as sensitive, 72h breach to PDPC, Egypt National ID 14-digit (`egypt-pdpl.yaml` + `.rego`)
+- [x] Mauritius DPA 2017 — most GDPR-aligned African DPA, mandatory DPO (all controllers), mandatory registration, 72h breach, automated decision transparency, Mauritius NIC (`mauritius-dpa.yaml` + `.rego`)
 - [x] Semantic versioning — `CHANGELOG.md` + `REGULATORY-CHANGES.md`
 - [ ] ECOWAS cross-border transfer rules
 - [ ] SIM swap fraud detection patterns
