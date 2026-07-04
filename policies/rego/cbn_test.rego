@@ -77,6 +77,16 @@ test_deny_large_amount_in_output_naira if {
 	}
 }
 
+test_deny_large_amount_in_output_suffix_ngn if {
+	# Regression: suffix form "15,000,001 NGN" was not caught before suffix rule added
+	count(cbn.deny) > 0 with input as {
+		"action": "respond",
+		"params": {},
+		"output": "Processing transfer: 15,000,001 NGN to account 0123456789.",
+		"context": {},
+	}
+}
+
 # ── Escalate: Tier 3 (₦5M–₦10M range) ───────────────────────────
 
 test_escalate_tier3_at_ceiling if {
